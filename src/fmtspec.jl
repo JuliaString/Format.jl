@@ -210,5 +210,5 @@ end
 
 printfmt(fs::FormatSpec, x) = printfmt(STDOUT, fs, x)
 
-cfmt(fs::FormatSpec, x) = (buf = IOBuffer(); printfmt(buf, fs, x); bytestring(buf))
-cfmt(spec::String, x) = cfmt(FormatSpec(spec), x)
+pyfmt(fs::FormatSpec, x)       = (buf = IOBuffer(); printfmt(buf, fs, x); bytestr(buf))
+pyfmt(spec::AbstractString, x) = pyfmt(FormatSpec(spec), x)

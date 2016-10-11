@@ -1,14 +1,12 @@
-formatters = Dict{ String, Function }()
+formatters = Dict{ ASCIIStr, Function }()
 
-sprintf1( fmt::String, x ) = eval(Expr(:call, generate_formatter( fmt ), x))
-
-function checkfmt(fmt)
-    test = Base.Printf.parse( fmt )
-    (length( test ) == 1 && typeof( test[1] ) <: Tuple) ||
-        error( "Only one AND undecorated format string is allowed")
+function cfmt( fmt::ASCIIStr, x )
+    global formatters
+    f = generate_formatter( fmt )
+    f( x )
 end
 
-function generate_formatter( fmt::String )
+function generate_formatter( fmt::ASCIIStr )
     global formatters
 
     haskey( formatters, fmt ) && return formatters[fmt]
@@ -17,6 +15,7 @@ function generate_formatter( fmt::String )
         checkfmt(fmt)
         return (formatters[ fmt ] = @eval(x->@sprintf( $fmt, x )))
     end
+    func = Symbol( "sprintf_", replace( base64encode( fmt ), "=", "!" ) )
 
     conversion = fmt[end]
     conversion in "sduifF" ||
@@ -63,8 +62,7 @@ function checkcommas(s)
     s
 end
 
-
-function addcommas( s::String )
+function addcommas( s::ASCIIStr )
     len = length(s)
     t = ""
     for i in 1:3:len
@@ -91,35 +89,27 @@ function generate_format_string(;
         signed::Bool=false,
         positivespace::Bool=false,
         alternative::Bool=false,
-        conversion::String="f" #aAdecEfFiosxX
-        )
+        conversion::ASCIIStr="f" #aAdecEfFiosxX
+    )
+    
     s = "%"
-    if commas
-        s *= "'"
-    end
-    if alternative && in( conversion[1], "aAeEfFoxX" )
-        s *= "#"
-    end
-    if zeropadding && !leftjustified && width != -1
-        s *= "0"
-    end
-
+    commas &&
+        (s *= "'")
+    alternative && in( conversion[1], "aAeEfFoxX" ) &&
+        (s *= "#")
+    zeropadding && !leftjustified && width != -1 &&
+        (s *= "0")
     if signed
         s *= "+"
     elseif positivespace
         s *= " "
     end
-
     if width != -1
-        if leftjustified
-            s *= "-" * string( width )
-        else
-            s *= string( width )
-        end
+        leftjustified && (s *= "-")
+        s *= string( width )
     end
-    if precision != -1
-        s *= "." * string( precision )
-    end
+    precision != -1 &&
+        (s *= "." * string( precision ))
     s * conversion
 end
 
@@ -135,13 +125,13 @@ function format( x::T;
         parens::Bool=false, # use (1.00) instead of -1.00. Used in finance
         alternative::Bool=false, # usually for hex
         mixedfraction::Bool=false,
-        mixedfractionsep::AbstractString="_",
-        fractionsep::AbstractString="/", # num / den
+        mixedfractionsep::UTF8Str="_",
+        fractionsep::UTF8Str="/", # num / den
         fractionwidth::Int = 0,
         tryden::Int = 0, # if 2 or higher, try to use this denominator, without losing precision
-        suffix::AbstractString="", # useful for units/%
+        suffix::UTF8Str="", # useful for units/%
         autoscale::Symbol=:none, # :metric, :binary or :finance
-        conversion::String=""
+        conversion::ASCIIStr=""
         ) where {T<:Real}
     checkwidth = commas
     if conversion == ""
@@ -240,16 +230,17 @@ function format( x::T;
             actualx = x
         end
     end
-    s = sprintf1( generate_format_string( width=width,
-        precision=precision,
-        leftjustified=leftjustified,
-        zeropadding=zeropadding,
-        commas=commas,
-        signed=signed,
-        positivespace=positivespace,
-        alternative=alternative,
-        conversion=actualconv
-    ),actualx)
+    s = cfmt( generate_format_string( width=width,
+                                      precision=precision,
+                                      leftjustified=leftjustified,
+                                      zeropadding=zeropadding,
+                                      commas=commas,
+                                      signed=signed,
+                                      positivespace=positivespace,
+                                      alternative=alternative,
+                                      conversion=actualconv
+                                      ),
+              actualx)
 
     if T <:Rational && conversion == "s"
         if mixedfraction && fractional != 0

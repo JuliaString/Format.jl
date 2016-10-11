@@ -48,7 +48,7 @@ function make_argspec(s::AbstractString, pos::Int)
         else
             pos = -1
         end
-    end
+    end 
 
     return (ArgSpec(iarg, hasfil, ff), pos)
 end
@@ -79,10 +79,10 @@ end
 ### Format expression
 
 mutable struct FormatExpr
-    prefix::String
-    suffix::String
+    prefix::UTF8Str
+    suffix::UTF8Str
     entries::Vector{FormatEntry}
-    inter::Vector{String}
+    inter::Vector{UTF8Str}
 end
 
 _raise_unmatched_lbrace() = error("Unmatched { in format expression.")
@@ -101,7 +101,7 @@ function find_next_entry_open(s::AbstractString, si::Int)
         pre = replace(pre, "{{" => '{')
         pre = replace(pre, "}}" => '}')
     end
-    return (p, convert(String, pre))
+    return (p, convert(UTF8Str(pre)))
 end
 
 function find_next_entry_close(s::AbstractString, si::Int)
@@ -112,11 +112,14 @@ function find_next_entry_close(s::AbstractString, si::Int)
 end
 
 function FormatExpr(s::AbstractString)
+    slen = length(s)
+    
     # init
-    prefix = ""
-    suffix = ""
+    prefix = UTF8Str("")
+    suffix = UTF8Str("")
     entries = FormatEntry[]
-    inter = String[]
+    inter = UTF8Str[]
+
     # scan
     (p, prefix) = find_next_entry_open(s, 1)
     if p !== nothing
@@ -156,11 +159,11 @@ function printfmt(io::IO, fe::FormatExpr, args...)
     end
 end
 
+typealias StringOrFE Union{AbstractString,FormatExpr}
 printfmt(io::IO, fe::AbstractString, args...) = printfmt(io, FormatExpr(fe), args...)
-printfmt(fe::Union{AbstractString,FormatExpr}, args...) = printfmt(STDOUT, fe, args...)
+#format(fe::StringOrFE, args...) = sprint(printfmt, fe, args...)
 
-printfmtln(io::IO, fe::Union{AbstractString,FormatExpr}, args...) = (printfmt(io, fe, args...); println(io))
-printfmtln(fe::Union{AbstractString,FormatExpr}, args...) = printfmtln(STDOUT, fe, args...)
+printfmt(fe::StringOrFE, args...) = printfmt(STDOUT, fe, args...)
 
-format(fe::Union{AbstractString,FormatExpr}, args...) =
-    sprint(printfmt, fe, args...)
+printfmtln(io::IO, fe::StringOrFE, args...) = (printfmt(io, fe, args...); println(io))
+printfmtln(fe::StringOrFE, args...) = printfmtln(STDOUT, fe, args...)
