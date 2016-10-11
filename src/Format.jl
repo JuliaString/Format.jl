@@ -1,6 +1,6 @@
 __precompile__()
 
-module Formatting
+module Format
 
     import Base.show
     using Compat

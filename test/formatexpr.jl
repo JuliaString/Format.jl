@@ -1,4 +1,4 @@
-using Formatting
+using Format
 using Compat.Test
 
 # with positional arguments

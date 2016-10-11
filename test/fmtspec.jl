@@ -1,8 +1,7 @@
 # test format spec parsing
 
-using Formatting
+using Format
 using Compat.Test
-
 
 # default spec
 fs = FormatSpec("")

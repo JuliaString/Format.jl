@@ -1,5 +1,4 @@
-using Formatting
-using Compat.Test
+using Format
 
 # include( "cformat.jl" )
 # include( "fmtspec.jl" )
