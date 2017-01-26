@@ -1,11 +1,17 @@
 formatters = Dict{ ASCIIStr, Function }()
 
-function cfmt( fmt::ASCIIStr, x )
-    global formatters
-    f = generate_formatter( fmt )
-    f( x )
+if VERSION >= v"0.5.0"
+    cfmt( fmt::ASCIIStr, x ) = eval(Expr(:call, generate_formatter( fmt ), x))
+else
+    cfmt( fmt::ASCIIStr, x ) = (generate_formatter( fmt ))(x)
 end
 
+function checkfmt(fmt)
+    test = Base.Printf.parse( fmt )
+    (length( test ) == 1 && typeof( test[1] ) <: Tuple) ||
+        error( "Only one AND undecorated format string is allowed")
+end
+    
 function generate_formatter( fmt::ASCIIStr )
     global formatters
 
@@ -15,13 +21,11 @@ function generate_formatter( fmt::ASCIIStr )
         checkfmt(fmt)
         return (formatters[ fmt ] = @eval(x->@sprintf( $fmt, x )))
     end
-    func = Symbol( "sprintf_", replace( base64encode( fmt ), "=", "!" ) )
 
     conversion = fmt[end]
     conversion in "sduifF" ||
         error( string("thousand separator not defined for ", conversion, " conversion") )
 
-#=
     fmtactual = replace( fmt, "'" => "", count=1 )
     checkfmt( fmtactual )
     conversion in "sfF" ||
@@ -58,59 +62,6 @@ function checkcommas(s)
         if isdigit( s[i] )
             s = string(addcommas( s[1:i] ), s[i+1:end])
             break
-=#
-        code = quote
-            function $func( x )
-                @sprintf( $fmt, x )
-            end
-        end
-    else
-        conversion = fmt[end]
-        if !in( conversion, "sduifF" )
-            error( string("thousand separator not defined for ", conversion, " conversion") )
-        end
-        fmtactual = replace( fmt, "'", "", 1 )
-        test = Base.Printf.parse( fmtactual )
-        if length( test ) != 1 || !( typeof( test[1] ) <: Tuple )
-            error( "Only one AND undecorated format string is allowed")
-        end
-        if in( conversion, "sfF" )
-            code = quote
-                function $func{T<:Real}( x::T )
-                    s = @sprintf( $fmtactual, x )
-                    # commas are added to only the numerator
-                    if T <: Rational && endswith( $fmtactual, "s" )
-                        spos = findfirst( s, '/' )
-                        s = string(addcommas( s[1:spos-1] ), s[spos:end])
-                    else
-                        dpos = findfirst( s, '.' )
-                        if dpos != 0
-                            s = string(addcommas( s[1:dpos-1] ), s[ dpos:end ])
-                        else # find the rightmost digit
-                            for i in length( s ):-1:1
-                                if isdigit( s[i] )
-                                    s = string(addcommas( s[1:i] ), s[i+1:end])
-                                    break
-                                end
-                            end
-                        end
-                    end
-                    s
-                end
-            end
-        else
-            code = quote
-                function $func( x )
-                    s = @sprintf( $fmtactual, x )
-                    for i in length( s ):-1:1
-                        if isdigit( s[i] )
-                            s = string(addcommas( s[1:i] ), s[i+1:end])
-                            break
-                        end
-                    end
-                    s
-                end
-            end
         end
     end
     s
@@ -123,15 +74,13 @@ function addcommas( s::ASCIIStr )
         subs = s[max(1,len-i-1):len-i+1]
         if i == 1
             t = subs
+        elseif match( r"[0-9]", subs ) != nothing
+            t = string(subs, ',', t)
         else
-            if match( r"[0-9]", subs ) != nothing
-                t = string(subs, ',', t)
-            else
-                t = string(subs, t)
-            end
+            t = string(subs, t)
         end
     end
-    return t
+    t
 end
 
 function generate_format_string(;
