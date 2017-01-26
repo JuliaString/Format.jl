@@ -21,6 +21,7 @@ function generate_formatter( fmt::ASCIIStr )
     conversion in "sduifF" ||
         error( string("thousand separator not defined for ", conversion, " conversion") )
 
+#=
     fmtactual = replace( fmt, "'" => "", count=1 )
     checkfmt( fmtactual )
     conversion in "sfF" ||
@@ -57,6 +58,59 @@ function checkcommas(s)
         if isdigit( s[i] )
             s = string(addcommas( s[1:i] ), s[i+1:end])
             break
+=#
+        code = quote
+            function $func( x )
+                @sprintf( $fmt, x )
+            end
+        end
+    else
+        conversion = fmt[end]
+        if !in( conversion, "sduifF" )
+            error( string("thousand separator not defined for ", conversion, " conversion") )
+        end
+        fmtactual = replace( fmt, "'", "", 1 )
+        test = Base.Printf.parse( fmtactual )
+        if length( test ) != 1 || !( typeof( test[1] ) <: Tuple )
+            error( "Only one AND undecorated format string is allowed")
+        end
+        if in( conversion, "sfF" )
+            code = quote
+                function $func{T<:Real}( x::T )
+                    s = @sprintf( $fmtactual, x )
+                    # commas are added to only the numerator
+                    if T <: Rational && endswith( $fmtactual, "s" )
+                        spos = findfirst( s, '/' )
+                        s = string(addcommas( s[1:spos-1] ), s[spos:end])
+                    else
+                        dpos = findfirst( s, '.' )
+                        if dpos != 0
+                            s = string(addcommas( s[1:dpos-1] ), s[ dpos:end ])
+                        else # find the rightmost digit
+                            for i in length( s ):-1:1
+                                if isdigit( s[i] )
+                                    s = string(addcommas( s[1:i] ), s[i+1:end])
+                                    break
+                                end
+                            end
+                        end
+                    end
+                    s
+                end
+            end
+        else
+            code = quote
+                function $func( x )
+                    s = @sprintf( $fmtactual, x )
+                    for i in length( s ):-1:1
+                        if isdigit( s[i] )
+                            s = string(addcommas( s[1:i] ), s[i+1:end])
+                            break
+                        end
+                    end
+                    s
+                end
+            end
         end
     end
     s
@@ -71,9 +125,9 @@ function addcommas( s::ASCIIStr )
             t = subs
         else
             if match( r"[0-9]", subs ) != nothing
-                t = subs * "," * t
+                t = string(subs, ',', t)
             else
-                t = subs * t
+                t = string(subs, t)
             end
         end
     end
@@ -92,25 +146,25 @@ function generate_format_string(;
         conversion::ASCIIStr="f" #aAdecEfFiosxX
     )
     
-    s = "%"
+    s = ['%'%UInt8]
     commas &&
-        (s *= "'")
+        push!(s, '\'')
     alternative && in( conversion[1], "aAeEfFoxX" ) &&
-        (s *= "#")
+        push!(s, '#')
     zeropadding && !leftjustified && width != -1 &&
-        (s *= "0")
+        push!(s, '0')
     if signed
-        s *= "+"
+        push!(s, '+')
     elseif positivespace
-        s *= " "
+        push!(s, ' ')
     end
     if width != -1
-        leftjustified && (s *= "-")
-        s *= string( width )
+        leftjustified && push!(s, '-')
+        append!(s, Vector{UInt8}(string( width )))
     end
     precision != -1 &&
-        (s *= "." * string( precision ))
-    s * conversion
+        append!(s, Vector{UInt8}(string( '.', precision )))
+    String(append!(s, Vector{UInt8}(conversion)))
 end
 
 function format( x::T;
@@ -170,7 +224,7 @@ function format( x::T;
                 for (mag, sym) in scales
                     if abs(x) >= mag
                         x /= mag
-                        suffix = sym * suffix
+                        suffix = string(sym, suffix)
                         break
                     end
                 end
@@ -183,7 +237,7 @@ function format( x::T;
                 for (mag,sym) in smallscales
                     if abs(x) < mag*10
                         x /= mag
-                        suffix = sym * suffix
+                        suffix = string(sym, suffix)
                         break
                     end
                 end
@@ -210,7 +264,7 @@ function format( x::T;
             for (mag, sym) in scales
                 if abs(x) >= mag
                     x /= mag
-                    suffix = sym * suffix
+                    suffix = string(sym, suffix)
                     break
                 end
             end
@@ -250,19 +304,17 @@ function format( x::T;
                 num *= div(tryden,den)
                 den = tryden
             end
-            fs = string( num ) * fractionsep * string(den)
+            fs = string( num, fractionsep, den)
             if length(fs) < fractionwidth
-                fs = repeat( "0", fractionwidth - length(fs) ) * fs
+                fs = string(repeat( "0", fractionwidth - length(fs) ), fs)
             end
             s = rstrip(s)
             if actualx != 0
-                s = rstrip(s) * mixedfractionsep * fs
+                s = string(rstrip(s), mixedfractionsep, fs)
+            elseif !nonneg
+                s = string('-', fs)
             else
-                if !nonneg
-                    s = "-" * fs
-                else
-                    s = fs
-                end
+                s = fs
             end
             checkwidth = true
         elseif !mixedfraction
@@ -301,19 +353,19 @@ function format( x::T;
             if stripfrom == dpos+1 # everything after decimal is 0, so strip the decimal too
                 stripfrom = dpos
             end
-            s = s[1:stripfrom-1] * s[rpos+1:end]
+            s = string(s[1:stripfrom-1], s[rpos+1:end])
             checkwidth = true
         end
     end
 
-    s *= suffix
+    s = string(s, suffix)
 
     if parens && !in( actualconv[1], "xX" )
         # if zero or positive, we still need 1 white space on the right
         if nonneg
-            s = " " * strip(s) * " "
+            s = string(' ', strip(s), ' ')
         else
-            s = "(" * strip(s) * ")"
+            s = string('(', strip(s), ')')
         end
 
         checkwidth = true
@@ -330,9 +382,9 @@ function format( x::T;
             end
         elseif length(s) < width
             if leftjustified
-                s = s * repeat( " ", width - length(s) )
+                s = string(s, repeat( " ", width - length(s) ))
             else
-                s = repeat( " ", width - length(s) ) * s
+                s = string(repeat( " ", width - length(s) ), s)
             end
         end
     end

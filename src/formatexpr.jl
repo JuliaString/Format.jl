@@ -101,7 +101,7 @@ function find_next_entry_open(s::AbstractString, si::Int)
         pre = replace(pre, "{{" => '{')
         pre = replace(pre, "}}" => '}')
     end
-    return (p, convert(UTF8Str(pre)))
+    return (p, convert(UTF8Str, pre))
 end
 
 function find_next_entry_close(s::AbstractString, si::Int)
@@ -161,9 +161,10 @@ end
 
 typealias StringOrFE Union{AbstractString,FormatExpr}
 printfmt(io::IO, fe::AbstractString, args...) = printfmt(io, FormatExpr(fe), args...)
-#format(fe::StringOrFE, args...) = sprint(printfmt, fe, args...)
 
 printfmt(fe::StringOrFE, args...) = printfmt(STDOUT, fe, args...)
 
 printfmtln(io::IO, fe::StringOrFE, args...) = (printfmt(io, fe, args...); println(io))
 printfmtln(fe::StringOrFE, args...) = printfmtln(STDOUT, fe, args...)
+
+format(fe::StringOrFE, args...) = sprint(printfmt, fe, args...)
