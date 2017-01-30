@@ -1,9 +1,9 @@
 formatters = Dict{ ASCIIStr, Function }()
 
-if VERSION >= v"0.5.0"
-    cfmt( fmt::ASCIIStr, x ) = eval(Expr(:call, generate_formatter( fmt ), x))
-else
+@static if VERSION < v"0.6-"
     cfmt( fmt::ASCIIStr, x ) = (generate_formatter( fmt ))(x)
+else
+    cfmt( fmt::ASCIIStr, x ) = eval(Expr(:call, generate_formatter( fmt ), x))
 end
 
 function checkfmt(fmt)
@@ -254,17 +254,11 @@ function format( x::T;
                 den = tryden
             end
             fs = string( num, fractionsep, den)
-            if length(fs) < fractionwidth
-                fs = string(repeat( "0", fractionwidth - length(fs) ), fs)
-            end
-            s = rstrip(s)
-            if actualx != 0
-                s = string(rstrip(s), mixedfractionsep, fs)
-            elseif !nonneg
-                s = string('-', fs)
-            else
-                s = fs
-            end
+            length(fs) < fractionwidth &&
+                (fs = string(repeat( "0", fractionwidth - length(fs) ), fs))
+            s = (actualx != 0
+                 ? string(rstrip(s), mixedfractionsep, fs)
+                 : (nonneg ? fs : string('-', fs)))
             checkwidth = true
         elseif !mixedfraction
             s = replace( s, "//" => fractionsep )
@@ -272,17 +266,9 @@ function format( x::T;
         end
     elseif stripzeros && in( actualconv[1], "fFeEs" )
         dpos = Compat.findfirst( isequal('.'), s )
-        if in( actualconv[1], "eEs" )
-            if in( actualconv[1], "es" )
-                epos = Compat.findfirst( isequal('e'), s )
-            else
-                epos = Compat.findfirst( isequal('E'), s )
-            end
-            if epos === nothing
-                rpos = length( s )
-            else
-                rpos = epos-1
-            end
+        if actualconv[1] in "eEs"
+            epos = Compat.findfirst(isequal(actualconv[1] == 'E' ? 'E' : 'e'), s)
+            rpos = epos == 0 ? length( s ) : epos-1
         else
             rpos = length(s)
         end
@@ -311,12 +297,7 @@ function format( x::T;
 
     if parens && !in( actualconv[1], "xX" )
         # if zero or positive, we still need 1 white space on the right
-        if nonneg
-            s = string(' ', strip(s), ' ')
-        else
-            s = string('(', strip(s), ')')
-        end
-
+        s = nonneg ? string(' ', strip(s), ' ') : string('(', strip(s), ')')
         checkwidth = true
     end
 
