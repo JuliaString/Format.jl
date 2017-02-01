@@ -17,6 +17,18 @@ using Compat.Test
     @test fs.tsep == false
 end
 
+@testset "Show" begin
+    x = FormatSpec("#8,d")
+    io = IOBuffer()
+    show(io, x)
+    str = String(take!(io))
+    @test contains(str, "width = 8") 
+end
+
+@testset "Literal incorrect" begin
+    @test_throws ErrorException FormatSpec("Z")
+end
+
 # more cases
 
 fs = FormatSpec("d")
