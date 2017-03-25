@@ -254,7 +254,7 @@ function _pfmt_e(out::IO, fs::FormatSpec, x::AbstractFloat)
 end
 
 function _pfmt_specialf(out::IO, fs::FormatSpec, x::AbstractFloat)
-    if isinf(x) 
+    if isinf(x)
         if x > 0
             _pfmt_s(out, fs, "Inf")
         else
