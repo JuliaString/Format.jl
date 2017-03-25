@@ -1,5 +1,8 @@
 using Format
 using Base.Test
+@static if VERSION >= v"0.6-"
+    using SpecialFunctions
+end
 
 function test_equality()
     println( "test cformat equality...")
