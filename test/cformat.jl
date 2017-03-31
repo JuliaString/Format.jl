@@ -1,3 +1,6 @@
+_erfinv(z) = sqrt(π) * Base.Math.@horner(z, 0, 1, 0, π/12, 0, 7π^2/480, 0, 127π^3/40320, 0,
+                                         4369π^4/5806080, 0, 34807π^5/182476800) / 2
+
 function test_equality()
     println( "test cformat equality...")
     srand(10)
@@ -9,7 +12,7 @@ function test_equality()
              (x->@sprintf("%.3e", x),  "%.3e")]
     for (mfmtr,fmt) in fmts
         for i in 1:10000
-            n = erfinv( rand() * 1.99 - 1.99/2.0 )
+            n = _erfinv( rand() * 1.99 - 1.99/2.0 )
             expect = mfmtr( n )
             actual = cfmt( fmt, n )
             @test expect == actual
@@ -22,7 +25,7 @@ function test_equality()
              (x->@sprintf("%-10d",x), "%-10d")]
     for (mfmtr,fmt) in fmts
         for i in 1:10000
-            j = round(Int, erfinv( rand() * 1.99 - 1.99/2.0 ) * 100000 )
+            j = round(Int, _erfinv( rand() * 1.99 - 1.99/2.0 ) * 100000 )
             expect = mfmtr( j )
             actual = cfmt( fmt, j )
             @test expect == actual
@@ -62,20 +65,20 @@ println( "integer sprintf speed, bypass repeated lookup")
 function native_float()
     srand( 10 )
     for i in 1:200000
-        @sprintf( "%10.4f", erfinv( rand() ) )
+        @sprintf( "%10.4f", _erfinv( rand() ) )
     end
 end
 function runtime_float()
     srand( 10 )
     for i in 1:200000
-        cfmt( "%10.4f", erfinv( rand() ) )
+        cfmt( "%10.4f", _erfinv( rand() ) )
     end
 end
 function runtime_float_bypass()
     f = generate_formatter( "%10.4f" )
     srand( 10 )
     for i in 1:200000
-        f( erfinv( rand() ) )
+        f( _erfinv( rand() ) )
     end
 end
 
