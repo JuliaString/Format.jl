@@ -1,6 +1,6 @@
 formatters = Dict{ ASCIIStr, Function }()
 
-@static if VERSION < v"0.6-"
+@static if VERSION < v"0.6.0-dev.1671"
     cfmt( fmt::ASCIIStr, x ) = (generate_formatter( fmt ))(x)
 else
     cfmt( fmt::ASCIIStr, x ) = eval(Expr(:call, generate_formatter( fmt ), x))
