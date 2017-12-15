@@ -1,10 +1,10 @@
+@static if VERSION >= v"0.7.0-DEV.3058"
+    using Printf
+end
+
 formatters = Dict{ ASCIIStr, Function }()
 
-@static if VERSION < v"0.6.0-dev.1671"
-    cfmt( fmt::ASCIIStr, x ) = (generate_formatter( fmt ))(x)
-else
-    cfmt( fmt::ASCIIStr, x ) = eval(Expr(:call, generate_formatter( fmt ), x))
-end
+cfmt( fmt::ASCIIStr, x ) = eval(Expr(:call, generate_formatter( fmt ), x))
 
 function checkfmt(fmt)
     test = Base.Printf.parse( fmt )
@@ -116,7 +116,7 @@ function generate_format_string(;
     String(append!(s, Vector{UInt8}(conversion)))
 end
 
-function format{T<:Real}( x::T;
+function format( x::T;
         width::Int=-1,
         precision::Int= -1,
         leftjustified::Bool=false,
@@ -135,7 +135,7 @@ function format{T<:Real}( x::T;
         suffix::UTF8Str="", # useful for units/%
         autoscale::Symbol=:none, # :metric, :binary or :finance
         conversion::ASCIIStr=""
-        )
+        ) where {T<:Real}
     checkwidth = commas
     if conversion == ""
         if T <: AbstractFloat || T <: Rational && precision != -1
