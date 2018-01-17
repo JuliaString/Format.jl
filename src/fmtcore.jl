@@ -67,7 +67,7 @@ _signchar(x::Number, s::Char) = x < 0 ? '-' :
                                 s == '+' ? '+' :
                                 s == ' ' ? ' ' : '\0'
 
-function _pfmt_int{Op}(out::IO, sch::Char, ip::ASCIIStr, zs::Integer, ax::Integer, op::Op)
+function _pfmt_int(out::IO, sch::Char, ip::ASCIIStr, zs::Integer, ax::Integer, op::Op) where {Op}
     # print sign
     sch != '\0' && write(out, sch)
     # print prefix
@@ -79,7 +79,7 @@ function _pfmt_int{Op}(out::IO, sch::Char, ip::ASCIIStr, zs::Integer, ax::Intege
     nothing
 end
 
-function _pfmt_intdigits{Op,T<:Integer}(out::IO, ax::T, op::Op)
+function _pfmt_intdigits(out::IO, ax::T, op::Op) where {Op,T<:Integer}
     b_lb = _div(ax, op)
     b = one(T)
     while b <= b_lb
@@ -93,7 +93,7 @@ function _pfmt_intdigits{Op,T<:Integer}(out::IO, ax::T, op::Op)
     end
 end
 
-function _pfmt_i{Op}(out::IO, fs::FormatSpec, x::Integer, op::Op)
+function _pfmt_i(out::IO, fs::FormatSpec, x::Integer, op::Op) where {Op}
     # calculate actual length
     ax = abs(x)
     xlen = _ndigits(abs(x), op)
@@ -132,13 +132,11 @@ end
 
 function _pfmt_float(out::IO, sch::Char, zs::Integer, intv::Real, decv::Real, prec::Int)
     # print sign
-    if sch != '\0'
-        write(out, sch)
-    end
+    sch != '\0' && write(out, sch)
+
     # print padding zeros
-    if zs > 0
-        _repwrite(out, '0', zs)
-    end
+    zs > 0 && _repwrite(out, '0', zs)
+
     idecv = round(Integer, decv * exp10(prec))
     if idecv == exp10(prec)
         intv += 1
@@ -257,16 +255,10 @@ end
 
 function _pfmt_specialf(out::IO, fs::FormatSpec, x::AbstractFloat)
     if isinf(x)
-        if x > 0
-            _pfmt_s(out, fs, "Inf")
-        else
-            _pfmt_s(out, fs, "-Inf")
-        end
+        _pfmt_s(out, fs, x > 0 ? "Inf" : "-Inf")
     else
         @assert isnan(x)
         _pfmt_s(out, fs, "NaN")
     end
 end
-
-
 

@@ -19,6 +19,9 @@
 
 const _numtypchars = Set(['b', 'd', 'e', 'E', 'f', 'F', 'g', 'G', 'n', 'o', 'x', 'X'])
 
+_lowercase(c::Char) = 'A' <= c <= 'Z' ? Char(UInt32(c) + 32) : c
+
+
 _tycls(c::Char) =
     (c == 'd' || c == 'n' || c == 'b' || c == 'o' || c == 'x') ? 'i' :
     (c == 'e' || c == 'f' || c == 'g') ? 'f' :
@@ -26,7 +29,7 @@ _tycls(c::Char) =
     (c == 's') ? 's' :
     error("Invalid type char $(c)")
 
-immutable FormatSpec
+struct FormatSpec
     cls::Char    # category: 'i' | 'f' | 'c' | 's'
     typ::Char
     fill::Char
@@ -39,35 +42,31 @@ immutable FormatSpec
     tsep::Bool   # whether to use thousand-separator
 
     function FormatSpec(typ::Char;
-               fill::Char=' ',
-               align::Char='\0',
-               sign::Char='-',
-               width::Int=-1,
-               prec::Int=-1,
-               ipre::Bool=false,
-               zpad::Bool=false,
-               tsep::Bool=false)
+                        fill::Char=' ',
+                        align::Char='\0',
+                        sign::Char='-',
+                        width::Int=-1,
+                        prec::Int=-1,
+                        ipre::Bool=false,
+                        zpad::Bool=false,
+                        tsep::Bool=false)
 
-        if align=='\0'
-            align = (typ in _numtypchars) ? '>' : '<'
-        end
-        cls = _tycls(lowercase(typ))
-        if cls == 'f' && prec < 0
-            prec = 6
-        end
+        align == '\0' && (align = (typ in _numtypchars) ? '>' : '<')
+        cls = _tycls(_lowercase(typ))
+        cls == 'f' && prec < 0 && (prec = 6)
         new(cls, typ, fill, align, sign, width, prec, ipre, zpad, tsep)
     end
 
     # copy constructor with overrides
     function FormatSpec(spec::FormatSpec;
-               fill::Char=spec.fill,
-               align::Char=spec.align,
-               sign::Char=spec.sign,
-               width::Int=spec.width,
-               prec::Int=spec.prec,
-               ipre::Bool=spec.ipre,
-               zpad::Bool=spec.zpad,
-               tsep::Bool=spec.tsep)
+                        fill::Char=spec.fill,
+                        align::Char=spec.align,
+                        sign::Char=spec.sign,
+                        width::Int=spec.width,
+                        prec::Int=spec.prec,
+                        ipre::Bool=spec.ipre,
+                        zpad::Bool=spec.zpad,
+                        tsep::Bool=spec.tsep)
         new(spec.cls, spec.typ, fill, align, sign, width, prec, ipre, zpad, tsep)
     end
 end
@@ -120,14 +119,10 @@ function FormatSpec(s::AbstractString)
         end
 
         # a2: [sign]
-        if a2 != nothing
-            _sign = a2[1]
-        end
+        a2 != nothing && (_sign = a2[1])
 
         # a3: [#]
-        if a3 != nothing
-            _ipre = true
-        end
+        a3 != nothing && (_ipre = true)
 
         # a4: [0][width]
         if a4 != nothing
@@ -142,48 +137,39 @@ function FormatSpec(s::AbstractString)
         end
 
         # a5: [,]
-        if a5 != nothing
-            _tsep = true
-        end
+        a5 != nothing && (_tsep = true)
 
         # a6 [.prec]
-        if a6 != nothing
-            _prec = parse(Int,a6[2:end])
-        end
+        a6 != nothing && (_prec = parse(Int,a6[2:end]))
 
         # a7: [type]
-        if a7 != nothing
-            _typ = a7[1]
-        end
+        a7 != nothing && (_typ = a7[1])
     end
 
-    return FormatSpec(_typ;
-                      fill=_fill,
-                      align=_align,
-                      sign=_sign,
-                      width=_width,
-                      prec=_prec,
-                      ipre=_ipre,
-                      zpad=_zpad,
-                      tsep=_tsep)
-end
+    FormatSpec(_typ;
+               fill=_fill,
+               align=_align,
+               sign=_sign,
+               width=_width,
+               prec=_prec,
+               ipre=_ipre,
+               zpad=_zpad,
+               tsep=_tsep)
+end # function FormatSpec
 
 
 ## formatted printing using a format spec
 
-type _Dec end
-type _Oct end
-type _Hex end
-type _HEX end
-type _Bin end
+struct _Dec end
+struct _Oct end
+struct _Hex end
+struct _HEX end
+struct _Bin end
 
 _srepr(x) = repr(x)
 _srepr(x::AbstractString) = x
 _srepr(x::Char) = string(x)
-
-if isdefined(:Enum)
-    _srepr(x::Enum) = string(x)
-end
+_srepr(x::Enum) = string(x)
 
 function printfmt(io::IO, fs::FormatSpec, x)
     cls = fs.cls

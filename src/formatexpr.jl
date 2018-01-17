@@ -2,7 +2,7 @@
 
 ### Argument specification
 
-immutable ArgSpec
+struct ArgSpec
     argidx::Int
     hasfilter::Bool
     filter::Function
@@ -55,7 +55,7 @@ end
 
 ### Format entry
 
-immutable FormatEntry
+struct FormatEntry
     argspec::ArgSpec
     spec::FormatSpec
 end
@@ -77,7 +77,7 @@ end
 
 ### Format expression
 
-type FormatExpr
+mutable struct FormatExpr
     prefix::UTF8Str
     suffix::UTF8Str
     entries::Vector{FormatEntry}
