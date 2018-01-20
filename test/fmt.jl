@@ -1,5 +1,6 @@
 using Format
-using Base.Test
+
+@static VERSION < v"0.7.0-DEV" ? (using Base.Test) : (using Test)
 
 # some basic functionality testing
 x = 1234.56789
