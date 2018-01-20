@@ -1,13 +1,10 @@
 # test format spec parsing
 
 using Format
-using Base.Test
 
-@static if VERSION <= v"0.6-"
-    ts(io) = takebuf_string(io)
-else
-    ts(io) = String(take!(io))
-end
+@static VERSION < v"0.7.0-DEV" ? (using Base.Test) : (using Test)
+
+ts(io) = String(take!(io))
 
 # default spec
 @testset "Default spec" begin
