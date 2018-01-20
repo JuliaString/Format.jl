@@ -1,8 +1,5 @@
 # test format spec parsing
 
-using Format
-using Compat.Test
-
 # default spec
 @testset "Default spec" begin
     fs = FormatSpec("")

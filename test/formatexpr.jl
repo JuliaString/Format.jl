@@ -1,6 +1,3 @@
-using Format
-using Compat.Test
-
 @testset "format with positional arguments" begin
 
     @test format("{1}", 10) == "10"
