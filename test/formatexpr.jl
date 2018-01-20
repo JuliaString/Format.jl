@@ -1,7 +1,3 @@
-using Format
-
-@static VERSION < v"0.7.0-DEV" ? (using Base.Test) : (using Test)
-
 @testset "format with positional arguments" begin
 
     @test format("{1}", 10) == "10"
