@@ -4,6 +4,8 @@ using Format
 
 ts(io) = String(take!(io))
 
+using SpecialFunctions # Get erfinv
+
 include( "cformat.jl" )
 include( "fmtspec.jl" )
 include( "formatexpr.jl" )

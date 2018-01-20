@@ -1,11 +1,5 @@
 # test format spec parsing
 
-using Format
-
-@static VERSION < v"0.7.0-DEV" ? (using Base.Test) : (using Test)
-
-ts(io) = String(take!(io))
-
 # default spec
 @testset "Default spec" begin
     fs = FormatSpec("")

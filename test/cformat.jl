@@ -1,7 +1,3 @@
-using Format
-
-@static VERSION < v"0.7.0-DEV" ? (using Base.Test) : (using Test)
-
 function test_equality()
     println( "test cformat equality...")
     srand(10)
