@@ -14,7 +14,6 @@ export fmt_default, fmt_default!, reset!, default_spec, default_spec!
 # Later, use Strs package!
 isdefined(Main, :ASCIIStr) || (const ASCIIStr = String)
 isdefined(Main, :UTF8Str)  || (const UTF8Str = String)
-_findfirst(a, b) = Compat.findfirst(equalto(a), b))
 
 include("cformat.jl" )
 include("fmtspec.jl")
