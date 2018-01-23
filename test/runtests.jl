@@ -6,6 +6,8 @@ using Format
 
 ts(io) = String(take!(io))
 
+using SpecialFunctions # Get erfinv
+
 @testset "cformat"    begin include( "cformat.jl" ) end
 @testset "fmtspec"    begin include( "fmtspec.jl" ) end
 @testset "formatexpr" begin include( "formatexpr.jl" ) end
