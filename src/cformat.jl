@@ -1,6 +1,4 @@
-@static if VERSION >= v"0.7.0-DEV.3058"
-    using Printf
-end
+@static VERSION >= v"0.7.0-DEV.3058" && (using Printf)
 
 formatters = Dict{ ASCIIStr, Function }()
 

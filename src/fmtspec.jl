@@ -129,10 +129,10 @@ function FormatSpec(s::AbstractString)
             if a4[1] == '0'
                 _zpad = true
                 if length(a4) > 1
-                    _width = parse(Int,a4[2:end])
+                    _width = parse(Int, a4[2:end])
                 end
             else
-                _width = parse(Int,a4)
+                _width = parse(Int, a4)
             end
         end
 
@@ -140,7 +140,7 @@ function FormatSpec(s::AbstractString)
         a5 != nothing && (_tsep = true)
 
         # a6 [.prec]
-        a6 != nothing && (_prec = parse(Int,a6[2:end]))
+        a6 != nothing && (_prec = parse(Int, a6[2:end]))
 
         # a7: [type]
         a7 != nothing && (_typ = a7[1])
