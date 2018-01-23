@@ -40,7 +40,7 @@ function generate_formatter( fmt::ASCIIStr )
 end
 
 function addcommasreal(s)
-    dpos = findfirst( s, '.' )
+    dpos = _findfirst('.', s)
     dpos != 0 && return string(addcommas( s[1:dpos-1] ), s[ dpos:end ])
     # find the rightmost digit
     for i in length( s ):-1:1
@@ -51,7 +51,7 @@ end
 
 function addcommasrat(s)
     # commas are added to only the numerator
-    spos = findfirst( s, '/' )
+    spos = _findfirst('/', s)
     string(addcommas( s[1:spos-1] ), s[spos:end])
 end
 
@@ -263,9 +263,9 @@ function format( x::T;
             checkwidth = true
         end
     elseif stripzeros && in( actualconv[1], "fFeEs" )
-        dpos = findfirst( s, '.')
+        dpos = _findfirst('.', s)
         if actualconv[1] in "eEs"
-            epos = findfirst(s, actualconv[1] == 'E' ? 'E' : 'e')
+            epos = _findfirst(actualconv[1] == 'E' ? 'E' : 'e', s)
             rpos = epos == 0 ? length( s ) : epos-1
         else
             rpos = length(s)

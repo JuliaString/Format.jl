@@ -12,7 +12,11 @@ export fmt_default, fmt_default!, reset!, default_spec, default_spec!
 # Later, use Strs package!
 isdefined(Main, :ASCIIStr) || (const ASCIIStr = String)
 isdefined(Main, :UTF8Str)  || (const UTF8Str = String)
-_findfirst(a, b) = (@static VERSION < v"0.7.0-DEV" ? findfirst(b, a) : findfirst(equalto(a), b))
+@static if VERSION < v"0.7.0-DEV"
+    _findfirst(a, b) = findfirst(b, a)
+else
+    _findfirst(a, b) = (p = findfirst(equalto(a), b); p == nothing ? 0 : p)
+end
 
 include("cformat.jl" )
 include("fmtspec.jl")
