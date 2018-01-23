@@ -123,7 +123,7 @@ end
 # TODO: get rid of this entire hack by moving commas into pyfmt
 
 function _optional_commas(x::Real, s::AbstractString, fspec::FormatSpec)
-    dpos = findfirst(s, '.')
+    dpos = _findfirst('.', s)
     prevwidth = length(s)
 
     if dpos == 0
