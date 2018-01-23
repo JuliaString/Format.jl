@@ -104,9 +104,8 @@ function FormatSpec(s::AbstractString)
 
     if !isempty(s)
         m = match(_spec_regex, s)
-        if m == nothing
-            error("Invalid formatting spec: $(s)")
-        end
+        m == nothing && error("Invalid formatting spec: $(s)")
+
         (a1, a2, a3, a4, a5, a6, a7) = m.captures
 
         # a1: [[fill]align]
@@ -120,41 +119,29 @@ function FormatSpec(s::AbstractString)
         end
 
         # a2: [sign]
-        if a2 != nothing
-            _sign = a2[1]
-        end
+        a2 == nothing || (_sign = a2[1])
 
         # a3: [#]
-        if a3 != nothing
-            _ipre = true
-        end
+        a3 == nothing || (_ipre = true)
 
         # a4: [0][width]
         if a4 != nothing
             if a4[1] == '0'
                 _zpad = true
-                if length(a4) > 1
-                    _width = parse(Int,a4[2:end])
-                end
+                length(a4) > 1 && (_width = parse(Int, a4[2:end]))
             else
-                _width = parse(Int,a4)
+                _width = parse(Int, a4)
             end
         end
 
         # a5: [,]
-        if a5 != nothing
-            _tsep = true
-        end
+        a5 == nothing || (_tsep = true)
 
         # a6 [.prec]
-        if a6 != nothing
-            _prec = parse(Int,a6[2:end])
-        end
+        a6 == nothing || (_prec = parse(Int, a6[2:end]))
 
         # a7: [type]
-        if a7 != nothing
-            _typ = a7[1]
-        end
+        a7 == nothing || (_typ = a7[1])
     end
 
     return FormatSpec(_typ;
