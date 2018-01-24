@@ -1,10 +1,6 @@
 formatters = Dict{ ASCIIStr, Function }()
 
-@static if VERSION < v"0.6.0-dev.1671"
-    cfmt( fmt::ASCIIStr, x ) = (generate_formatter( fmt ))(x)
-else
-    cfmt( fmt::ASCIIStr, x ) = eval(Expr(:call, generate_formatter( fmt ), x))
-end
+cfmt( fmt::ASCIIStr, x ) = eval(Expr(:call, generate_formatter( fmt ), x))
 
 function checkfmt(fmt)
     test = Base.Printf.parse( fmt )
@@ -303,19 +299,17 @@ function format( x::T;
 
     if checkwidth && width != -1
         if length(s) > width
-            s = replace( s, " " => "", count=length(s)-width )
-            if length(s) > width && endswith( s, " " )
-                s = reverse( replace( reverse(s), " " => "", count=length(s)-width ) )
-            end
+            s = replace( s, " " => ""; count=length(s)-width )
             if length(s) > width
-                s = replace( s, "," => "", count=length(s)-width )
+                endswith( s, " " ) &&
+                    (s = reverse( replace( reverse(s), " " => ""; count=length(s)-width ) ))
+                length(s) > width &&
+                    (s = replace( s, "," => ""; count=length(s)-width ))
             end
         elseif length(s) < width
-            if leftjustified
-                s = string(s, repeat( " ", width - length(s) ))
-            else
-                s = string(repeat( " ", width - length(s) ), s)
-            end
+            s = (leftjustified
+                 ? string(s, repeat( " ", width - length(s) ))
+                 : string(repeat( " ", width - length(s) ), s))
         end
     end
 

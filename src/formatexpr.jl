@@ -28,10 +28,10 @@ function make_argspec(s::AbstractString, pos::Int)
     if !isempty(s)
         filrange = Compat.findfirst("|>", s)
         if filrange === nothing
-            iarg = parse(Int,s)
+            iarg = parse(Int, s)
         else
             ifil = first(filrange)
-            iarg = ifil > 1 ? parse(Int,s[1:prevind(s, ifil)]) : -1
+            iarg = ifil > 1 ? parse(Int, s[1:prevind(s, ifil)]) : -1
             hasfil = true
             ff = eval(Symbol(s[ifil+2:end]))
         end
@@ -95,7 +95,6 @@ function find_next_entry_open(s::AbstractString, si::Int)
         p = Compat.findnext(isequal('{'), s, p+2)
         (p === nothing || p < slen) || _raise_unmatched_lbrace()
     end
-    # println("open at $p")
     pre = p !== nothing ? s[si:prevind(s, p)] : s[si:end]
     if !isempty(pre)
         pre = replace(pre, "{{" => '{')
@@ -107,7 +106,6 @@ end
 function find_next_entry_close(s::AbstractString, si::Int)
     p = Compat.findnext(isequal('}'), s, si)
     p !== nothing || _raise_unmatched_lbrace()
-    # println("close at $p")
     return p
 end
 
@@ -140,23 +138,19 @@ function FormatExpr(s::AbstractString)
 end
 
 function printfmt(io::IO, fe::FormatExpr, args...)
-    if !isempty(fe.prefix)
-        write(io, fe.prefix)
-    end
+    isempty(fe.prefix) || print(io, fe.prefix)
     ents = fe.entries
     ne = length(ents)
     if ne > 0
         e = ents[1]
         printfmt(io, e.spec, getarg(args, e.argspec))
         for i = 2:ne
-            write(io, fe.inter[i-1])
+            print(io, fe.inter[i-1])
             e = ents[i]
             printfmt(io, e.spec, getarg(args, e.argspec))
         end
     end
-    if !isempty(fe.suffix)
-        write(io, fe.suffix)
-    end
+    isempty(fe.suffix) || print(io, fe.suffix)
 end
 
 const StringOrFE = Union{AbstractString, FormatExpr}
