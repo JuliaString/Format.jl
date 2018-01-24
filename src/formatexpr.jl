@@ -26,7 +26,7 @@ function make_argspec(s::AbstractString, pos::Int)
     ff::Function = Base.identity
 
     if !isempty(s)
-        ifil = searchindex(s, "|>")
+        ifil = _searchindex(s, "|>")
         if ifil == 0
             iarg = parse(Int, s)
         else

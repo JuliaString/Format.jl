@@ -1,4 +1,5 @@
 @static VERSION >= v"0.7.0-DEV.3058" && (using Printf)
+_codeunits(s) = Vector{UInt8}(@static VERSION < v"0.7.0-DEV" ? s : codeunits(s))
 
 formatters = Dict{ ASCIIStr, Function }()
 
@@ -107,11 +108,11 @@ function generate_format_string(;
     end
     if width != -1
         leftjustified && push!(s, '-')
-        append!(s, Vector{UInt8}(string( width )))
+        append!(s, _codeunits(string( width )))
     end
     precision != -1 &&
-        append!(s, Vector{UInt8}(string( '.', precision )))
-    String(append!(s, Vector{UInt8}(conversion)))
+        append!(s, _codeunits(string( '.', precision )))
+    String(append!(s, _codeunits(conversion)))
 end
 
 function format( x::T;
