@@ -14,7 +14,7 @@ isdefined(Main, :ASCIIStr) || (const ASCIIStr = String)
 isdefined(Main, :UTF8Str)  || (const UTF8Str = String)
 @static if VERSION < v"0.7.0-DEV"
     _replace(s, p) = replace(s, p.first, p.second)
-    _replace(s, p; count=c) = replace(s, p.first, p.second, c)
+    _replace(s, p; count=1) = replace(s, p.first, p.second, count)
     _findfirst(ch, str) = findfirst(str, ch)
     _findnext(ch, str, pos) = findnext(str, ch, pos)
     const _searchindex = searchindex
