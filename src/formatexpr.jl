@@ -28,9 +28,9 @@ function make_argspec(s::AbstractString, pos::Int)
     if !isempty(s)
         ifil = searchindex(s, "|>")
         if ifil == 0
-            iarg = parse(Int,s)
+            iarg = parse(Int, s)
         else
-            iarg = ifil > 1 ? parse(Int,s[1:ifil-1]) : -1
+            iarg = ifil > 1 ? parse(Int, s[1:ifil-1]) : -1
             hasfil = true
             ff = eval(Symbol(s[ifil+2:end]))
         end
@@ -63,7 +63,7 @@ end
 function make_formatentry(s::AbstractString, pos::Int)
     @assert s[1] == '{' && s[end] == '}'
     sc = s[2:end-1]
-    icolon = search(sc, ':')
+    icolon = _findfirst(':', sc)
     if icolon == 0  # no colon
         (argspec, pos) = make_argspec(sc, pos)
         spec = FormatSpec('s')
@@ -88,24 +88,24 @@ _raise_unmatched_lbrace() = error("Unmatched { in format expression.")
 
 function find_next_entry_open(s::AbstractString, si::Int)
     slen = length(s)
-    p = search(s, '{', si)
+    p = _findnext('{', s, si)
     p < slen || _raise_unmatched_lbrace()
     while p > 0 && s[p+1] == '{'  # escape `{{`
-        p = search(s, '{', p+2)
+        p = _findnext('{', s, p+2)
         p < slen || _raise_unmatched_lbrace()
     end
     # println("open at $p")
     pre = p > 0 ? s[si:p-1] : s[si:end]
     if !isempty(pre)
-        pre = replace(pre, "{{", '{')
-        pre = replace(pre, "}}", '}')
+        pre = _replace(pre, "{{" => '{')
+        pre = _replace(pre, "}}" => '}')
     end
     return (p, String(pre))
 end
 
 function find_next_entry_close(s::AbstractString, si::Int)
     slen = length(s)
-    p = search(s, '}', si)
+    p = _findnext('}', s, si)
     p > 0 || _raise_unmatched_lbrace()
     # println("close at $p")
     return p

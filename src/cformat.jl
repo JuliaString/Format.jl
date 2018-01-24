@@ -24,7 +24,7 @@ function generate_formatter( fmt::ASCIIStr )
     conversion in "sduifF" ||
         error( string("thousand separator not defined for ", conversion, " conversion") )
 
-    fmtactual = replace( fmt, "'", "", 1 )
+    fmtactual = _replace( fmt, "'" => "", count=1 )
     checkfmt( fmtactual )
     conversion in "sfF" ||
         return (formatters[ fmt ] = @eval(x->checkcommas(@sprintf( $fmtactual, x ))))
@@ -259,7 +259,7 @@ function format( x::T;
                  : (nonneg ? fs : string('-', fs)))
             checkwidth = true
         elseif !mixedfraction
-            s = replace( s, "//", fractionsep )
+            s = _replace( s, "//" => fractionsep )
             checkwidth = true
         end
     elseif stripzeros && in( actualconv[1], "fFeEs" )
@@ -301,12 +301,12 @@ function format( x::T;
 
     if checkwidth && width != -1
         if length(s) > width
-            s = replace( s, " ", "", length(s)-width )
+            s = _replace( s, " " => "", count=length(s)-width )
             if length(s) > width && endswith( s, " " )
-                s = reverse( replace( reverse(s), " ", "", length(s)-width ) )
+                s = reverse( _replace( reverse(s), " " => ""; count=length(s)-width ) )
             end
             if length(s) > width
-                s = replace( s, ",", "", length(s)-width )
+                s = _replace( s, "," => ""; count=length(s)-width )
             end
         elseif length(s) < width
             if leftjustified

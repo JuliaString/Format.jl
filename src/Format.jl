@@ -13,9 +13,14 @@ export fmt_default, fmt_default!, reset!, default_spec, default_spec!
 isdefined(Main, :ASCIIStr) || (const ASCIIStr = String)
 isdefined(Main, :UTF8Str)  || (const UTF8Str = String)
 @static if VERSION < v"0.7.0-DEV"
-    _findfirst(a, b) = findfirst(b, a)
+    _replace(s, p) = replace(s, p.first, p.second)
+    _replace(s, p; count=c) = replace(s, p.first, p.second, c)
+    _findfirst(ch, str) = findfirst(str, ch)
+    _findnext(ch, str, pos) = findnext(str, ch, pos)
 else
-    _findfirst(a, b) = (p = findfirst(equalto(a), b); p == nothing ? 0 : p)
+    const _replace = replace
+    _findfirst(ch, str) = (p = findfirst(equalto(ch), str); p == nothing ? 0 : p)
+    _findnext(ch, str, pos) = (p = findnext(equalto(ch), str, pos); p == nothing ? 0 : p)
 end
 
 include("cformat.jl" )
