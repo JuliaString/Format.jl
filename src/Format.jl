@@ -17,6 +17,7 @@ isdefined(Main, :UTF8Str)  || (const UTF8Str = String)
     _findfirst(ch, str) = findfirst(str, ch)
     _findnext(ch, str, pos) = findnext(str, ch, pos)
     const _searchindex = searchindex
+    const stdout = STDOUT
 else
     const _replace = replace
     _findfirst(ch, str) = (p = findfirst(equalto(ch), str); p == nothing ? 0 : p)
