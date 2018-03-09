@@ -17,11 +17,12 @@ isdefined(Main, :UTF8Str)  || (const UTF8Str = String)
     _findfirst(ch, str) = findfirst(str, ch)
     _findnext(ch, str, pos) = findnext(str, ch, pos)
     const _searchindex = searchindex
+    const stdout = STDOUT
 else
     const _replace = replace
     _findfirst(ch, str) = (p = findfirst(equalto(ch), str); p == nothing ? 0 : p)
     _findnext(ch, str, pos) = (p = findnext(equalto(ch), str, pos); p == nothing ? 0 : p)
-    _searchindex(s, t) = first(findfirst(t, s))
+    _searchindex(s, t) = (p = findfirst(t, s); p == nothing ? 0 : first(p))
 end
 
 include("cformat.jl" )
