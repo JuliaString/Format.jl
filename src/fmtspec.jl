@@ -195,7 +195,7 @@ function printfmt(io::IO, fs::FormatSpec, x)
     end
 end
 
-printfmt(fs::FormatSpec, x) = printfmt(stdout, fs, x)
+printfmt(fs::FormatSpec, x) = printfmt(_stdout(), fs, x)
 
 pyfmt(fs::FormatSpec, x) = (buf = IOBuffer(); printfmt(buf, fs, x); String(take!(buf)))
 pyfmt(spec::AbstractString, x) = pyfmt(FormatSpec(spec), x)

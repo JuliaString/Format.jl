@@ -155,9 +155,9 @@ end
 
 const StringOrFE = Union{AbstractString, FormatExpr}
 printfmt(io::IO, fe::AbstractString, args...) = printfmt(io, FormatExpr(fe), args...)
-printfmt(fe::StringOrFE, args...) = printfmt(stdout, fe, args...)
+printfmt(fe::StringOrFE, args...) = printfmt(_stdout(), fe, args...)
 
 printfmtln(io::IO, fe::StringOrFE, args...) = (printfmt(io, fe, args...); println(io))
-printfmtln(fe::StringOrFE, args...) = printfmtln(stdout, fe, args...)
+printfmtln(fe::StringOrFE, args...) = printfmtln(_stdout(), fe, args...)
 
 format(fe::StringOrFE, args...) = sprint(printfmt, fe, args...)
