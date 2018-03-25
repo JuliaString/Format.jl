@@ -24,7 +24,7 @@ function generate_formatter( fmt::ASCIIStr )
     conversion in "sduifF" ||
         error( string("thousand separator not defined for ", conversion, " conversion") )
 
-    fmtactual = replace( fmt, "'" => "", count=1 )
+    fmtactual = replace( fmt, "'" => ""; count=1 )
     checkfmt( fmtactual )
     conversion in "sfF" ||
         return (formatters[ fmt ] = @eval(x->checkcommas(@sprintf( $fmtactual, x ))))
@@ -266,7 +266,7 @@ function format( x::T;
         dpos = Compat.findfirst( isequal('.'), s )
         if actualconv[1] in "eEs"
             epos = Compat.findfirst(isequal(actualconv[1] == 'E' ? 'E' : 'e'), s)
-            rpos = epos == 0 ? length( s ) : epos-1
+            rpos = epos === nothing ? length( s ) : epos-1
         else
             rpos = length(s)
         end
@@ -300,18 +300,14 @@ function format( x::T;
     end
 
     if checkwidth && width != -1
-        if length(s) > width
-            s = replace( s, " " => ""; count=length(s)-width )
-            if length(s) > width
-                endswith( s, " " ) &&
-                    (s = reverse( replace( reverse(s), " " => ""; count=length(s)-width ) ))
-                length(s) > width &&
-                    (s = replace( s, "," => ""; count=length(s)-width ))
+        if (len = length(s) - width) > 0
+            s = replace( s, " " => ""; count=len )
+            if (len = length(s) - width) > 0
+                endswith(s, " ") && (s = reverse(replace(reverse(s), " " => ""; count=len)))
+                (len = length(s) - width) > 0 && (s = replace( s, "," => ""; count=len ))
             end
-        elseif length(s) < width
-            s = (leftjustified
-                 ? string(s, repeat( " ", width - length(s) ))
-                 : string(repeat( " ", width - length(s) ), s))
+        elseif len < 0
+            s = leftjustified ? string(s, repeat( " ", -len )) : string(repeat( " ", -len), s)
         end
     end
 

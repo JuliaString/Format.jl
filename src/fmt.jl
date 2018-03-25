@@ -12,7 +12,7 @@
 # we keep the typechar around specifically for the reset! function,
 # to go back to the starting state
 
-type DefaultSpec
+mutable struct DefaultSpec
     typechar::Char
     fspec::FormatSpec
     DefaultSpec(c::Char) = new(c, FormatSpec(c))
@@ -21,18 +21,20 @@ end
 const DEFAULT_FORMATTERS = Dict{DataType, DefaultSpec}()
 
 # adds a new default formatter for this type
-default_spec!{T}(::Type{T}, c::Char) = (DEFAULT_FORMATTERS[T] = DefaultSpec(c); nothing)
+default_spec!(::Type{T}, c::Char) where {T} =
+    (DEFAULT_FORMATTERS[T] = DefaultSpec(c); nothing)
 
 # note: types T and K will now both share K's default
-default_spec!{T,K}(::Type{T}, ::Type{K}) = (DEFAULT_FORMATTERS[T] = DEFAULT_FORMATTERS[K]; nothing)
+default_spec!(::Type{T}, ::Type{K}) where {T,K} =
+    (DEFAULT_FORMATTERS[T] = DEFAULT_FORMATTERS[K]; nothing)
 
 # seed it with some basic default formatters
 for (t, c) in [(Integer,'d'), (AbstractFloat,'f'), (Char,'c'), (AbstractString,'s')]
     default_spec!(t, c)
 end
 
-reset!{T}(::Type{T}) = (dspec = default_spec(T); dspec.fspec = FormatSpec(dspec.typechar); nothing)
-
+reset!(::Type{T}) where {T} =
+    (dspec = default_spec(T); dspec.fspec = FormatSpec(dspec.typechar); nothing)
 
 # --------------------------------------------------------------------------------------------------
 
@@ -60,30 +62,31 @@ end
 # methods to get the current default objects
 # note: if you want to set a default for an abstract type (i.e. AbstractFloat)
 # you'll need to extend this method like here:
-default_spec{T<:Integer}(::Type{T}) = DEFAULT_FORMATTERS[Integer]
-default_spec{T<:AbstractFloat}(::Type{T}) = DEFAULT_FORMATTERS[AbstractFloat]
-default_spec{T<:AbstractString}(::Type{T}) = DEFAULT_FORMATTERS[AbstractString]
-function default_spec{T}(::Type{T})
+default_spec(::Type{<:Integer})        = DEFAULT_FORMATTERS[Integer]
+default_spec(::Type{<:AbstractFloat})  = DEFAULT_FORMATTERS[AbstractFloat]
+default_spec(::Type{<:AbstractString}) = DEFAULT_FORMATTERS[AbstractString]
+
+default_spec(::Type{T}) where {T} =
     get(DEFAULT_FORMATTERS, T) do
         error("Missing default spec for type $T... call default!(T, c): $DEFAULT_FORMATTERS")
     end
-end
+
 default_spec(x) = default_spec(typeof(x))
 
-fmt_default{T}(::Type{T}) = default_spec(T).fspec
+fmt_default(::Type{T}) where {T} = default_spec(T).fspec
 fmt_default(x) = default_spec(x).fspec
 
 
 
 # first resets the fmt_default spec to the given arg,
 # then continue by updating with args and kwargs
-fmt_default!{T}(::Type{T}, c::Char, args...; kwargs...) =
+fmt_default!(::Type{T}, c::Char, args...; kwargs...) where {T} =
     (default_spec!(T,c); fmt_default!(T, args...; kwargs...))
-fmt_default!{T,K}(::Type{T}, ::Type{K}, args...; kwargs...) =
+fmt_default!(::Type{T}, ::Type{K}, args...; kwargs...) where {T,K} =
     (default_spec!(T,K); fmt_default!(T, args...; kwargs...))
 
 # update the fmt_default for a specific type
-function fmt_default!{T}(::Type{T}, syms::Symbol...; kwargs...)
+function fmt_default!(::Type{T}, syms::Symbol...; kwargs...) where {T}
     if isempty(syms)
 
         # if there are no arguments, reset to initial defaults

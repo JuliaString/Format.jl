@@ -14,6 +14,7 @@ export fmt_default, fmt_default!, reset!, default_spec, default_spec!
 # Later, use Strs package!
 isdefined(Main, :ASCIIStr) || (const ASCIIStr = String)
 isdefined(Main, :UTF8Str)  || (const UTF8Str = String)
+isdefined(Main, :AbstractChar) || (const AbstractChar = Char)
 
 include("cformat.jl" )
 include("fmtspec.jl")
@@ -21,4 +22,4 @@ include("fmtcore.jl")
 include("formatexpr.jl")
 include("fmt.jl")
 
-end # module
+end # module Format
