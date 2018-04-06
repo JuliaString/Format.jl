@@ -124,28 +124,17 @@ end
 # TODO: get rid of this entire hack by moving commas into pyfmt
 
 function _optional_commas(x::Real, s::AbstractString, fspec::FormatSpec)
-    dpos = _findfirst('.', s)
     prevwidth = length(s)
-
-    if dpos == 0
-        s = addcommas(s)
-    else
-        s = string(addcommas(s[1:dpos-1]), '.', s[dpos+1:end])
-    end
+    dpos = Compat.findfirst( isequal('.'), s)
+    s = dpos === nothing ? addcommas(s) : string(addcommas(s[1:dpos-1]), '.', s[dpos+1:end])
 
     # check for excess width from commas
     w = length(s)
     if fspec.width > 0 && w > fspec.width && w > prevwidth
         # we may have made the string too wide with those commas... gotta fix it
-        s = strip(s)
-        n = fspec.width - length(s)
-        if fspec.align == '<' # left alignment
-            s = string(s, " "^n)
-        else
-            s = string(" "^n, s)
-        end 
+        # left or right alignment ('<' is left)
+        s = fspec.align == '<' ? rpad(strip(s), fspec.width) : lpad(strip(s), fspec.width)
     end
-
     s
 end
 _optional_commas(x, s::AbstractString, fspec::FormatSpec) = s
