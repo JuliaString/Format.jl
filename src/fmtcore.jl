@@ -262,5 +262,3 @@ function _pfmt_specialf(out::IO, fs::FormatSpec, x::AbstractFloat)
     end
 end
 
-
-

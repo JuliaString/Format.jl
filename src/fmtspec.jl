@@ -19,6 +19,9 @@
 
 const _numtypchars = Set(['b', 'd', 'e', 'E', 'f', 'F', 'g', 'G', 'n', 'o', 'x', 'X'])
 
+_lowercase(c::Char) = 'A' <= c <= 'Z' ? Char(UInt32(c) + 32) : c
+
+
 _tycls(c::Char) =
     (c == 'd' || c == 'n' || c == 'b' || c == 'o' || c == 'x') ? 'i' :
     (c == 'e' || c == 'f' || c == 'g') ? 'f' :
@@ -39,35 +42,31 @@ struct FormatSpec
     tsep::Bool   # whether to use thousand-separator
 
     function FormatSpec(typ::Char;
-               fill::Char=' ',
-               align::Char='\0',
-               sign::Char='-',
-               width::Int=-1,
-               prec::Int=-1,
-               ipre::Bool=false,
-               zpad::Bool=false,
-               tsep::Bool=false)
+                        fill::Char=' ',
+                        align::Char='\0',
+                        sign::Char='-',
+                        width::Int=-1,
+                        prec::Int=-1,
+                        ipre::Bool=false,
+                        zpad::Bool=false,
+                        tsep::Bool=false)
 
-        if align=='\0'
-            align = (typ in _numtypchars) ? '>' : '<'
-        end
-        cls = _tycls(lowercase(typ))
-        if cls == 'f' && prec < 0
-            prec = 6
-        end
+        align == '\0' && (align = (typ in _numtypchars) ? '>' : '<')
+        cls = _tycls(_lowercase(typ))
+        cls == 'f' && prec < 0 && (prec = 6)
         new(cls, typ, fill, align, sign, width, prec, ipre, zpad, tsep)
     end
 
     # copy constructor with overrides
     function FormatSpec(spec::FormatSpec;
-               fill::Char=spec.fill,
-               align::Char=spec.align,
-               sign::Char=spec.sign,
-               width::Int=spec.width,
-               prec::Int=spec.prec,
-               ipre::Bool=spec.ipre,
-               zpad::Bool=spec.zpad,
-               tsep::Bool=spec.tsep)
+                        fill::Char=spec.fill,
+                        align::Char=spec.align,
+                        sign::Char=spec.sign,
+                        width::Int=spec.width,
+                        prec::Int=spec.prec,
+                        ipre::Bool=spec.ipre,
+                        zpad::Bool=spec.zpad,
+                        tsep::Bool=spec.tsep)
         new(spec.cls, spec.typ, fill, align, sign, width, prec, ipre, zpad, tsep)
     end
 end
@@ -144,16 +143,16 @@ function FormatSpec(s::AbstractString)
         a7 == nothing || (_typ = a7[1])
     end
 
-    return FormatSpec(_typ;
-                      fill=_fill,
-                      align=_align,
-                      sign=_sign,
-                      width=_width,
-                      prec=_prec,
-                      ipre=_ipre,
-                      zpad=_zpad,
-                      tsep=_tsep)
-end
+    FormatSpec(_typ;
+               fill=_fill,
+               align=_align,
+               sign=_sign,
+               width=_width,
+               prec=_prec,
+               ipre=_ipre,
+               zpad=_zpad,
+               tsep=_tsep)
+end # function FormatSpec
 
 
 ## formatted printing using a format spec

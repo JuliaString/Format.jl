@@ -71,13 +71,6 @@ default_spec(::Type{T}) where {T} =
         error("Missing default spec for type $T... call default!(T, c): $DEFAULT_FORMATTERS")
     end
 
-default_spec(x) = default_spec(typeof(x))
-
-fmt_default(::Type{T}) where {T} = default_spec(T).fspec
-fmt_default(x) = default_spec(x).fspec
-
-
-
 # first resets the fmt_default spec to the given arg,
 # then continue by updating with args and kwargs
 fmt_default!(::Type{T}, c::Char, args...; kwargs...) where {T} =

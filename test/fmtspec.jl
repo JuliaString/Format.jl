@@ -26,6 +26,8 @@ end
     @test_throws ErrorException FormatSpec("Z")
 end
 
+# more cases
+
 @testset "FormatSpec(\"d\")" begin
     fs = FormatSpec("d")
     @test fs == FormatSpec('d')
@@ -230,4 +232,3 @@ end
     @test pyfmt("*>5f", Inf) == "**Inf"
     @test pyfmt("⋆>5f", Inf) == "⋆⋆Inf"
 end
-
