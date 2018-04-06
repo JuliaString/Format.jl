@@ -1,4 +1,3 @@
-@static VERSION >= v"0.7.0-DEV.3058" && (using Printf)
 _codeunits(s) = Vector{UInt8}(@static VERSION < v"0.7.0-DEV" ? s : codeunits(s))
 
 formatters = Dict{ ASCIIStr, Function }()
@@ -16,7 +15,7 @@ function generate_formatter( fmt::ASCIIStr )
 
     haskey( formatters, fmt ) && return formatters[fmt]
 
-    if !contains( fmt, "'" )
+    if !occursin("'", fmt)
         checkfmt(fmt)
         return (formatters[ fmt ] = @eval(x->@sprintf( $fmt, x )))
     end
@@ -25,7 +24,7 @@ function generate_formatter( fmt::ASCIIStr )
     conversion in "sduifF" ||
         error( string("thousand separator not defined for ", conversion, " conversion") )
 
-    fmtactual = _replace( fmt, "'" => "", count=1 )
+    fmtactual = replace( fmt, "'" => ""; count=1 )
     checkfmt( fmtactual )
     conversion in "sfF" ||
         return (formatters[ fmt ] = @eval(x->checkcommas(@sprintf( $fmtactual, x ))))
@@ -41,8 +40,8 @@ function generate_formatter( fmt::ASCIIStr )
 end
 
 function addcommasreal(s)
-    dpos = _findfirst('.', s)
-    dpos != 0 && return string(addcommas( s[1:dpos-1] ), s[ dpos:end ])
+    dpos = Compat.findfirst( isequal('.'), s )
+    dpos !== nothing && return string(addcommas( s[1:dpos-1] ), s[ dpos:end ])
     # find the rightmost digit
     for i in length( s ):-1:1
         isdigit( s[i] ) && return string(addcommas( s[1:i] ), s[i+1:end])
@@ -52,7 +51,7 @@ end
 
 function addcommasrat(s)
     # commas are added to only the numerator
-    spos = _findfirst('/', s)
+    spos = Compat.findfirst( isequal('/'), s )
     string(addcommas( s[1:spos-1] ), s[spos:end])
 end
 
@@ -260,14 +259,14 @@ function format( x::T;
                  : (nonneg ? fs : string('-', fs)))
             checkwidth = true
         elseif !mixedfraction
-            s = _replace( s, "//" => fractionsep )
+            s = replace( s, "//" => fractionsep )
             checkwidth = true
         end
     elseif stripzeros && in( actualconv[1], "fFeEs" )
-        dpos = _findfirst('.', s)
+        dpos = Compat.findfirst( isequal('.'), s )
         if actualconv[1] in "eEs"
-            epos = _findfirst(actualconv[1] == 'E' ? 'E' : 'e', s)
-            rpos = epos == 0 ? length( s ) : epos-1
+            epos = Compat.findfirst(isequal(actualconv[1] == 'E' ? 'E' : 'e'), s)
+            rpos = epos === nothing ? length( s ) : epos-1
         else
             rpos = length(s)
         end
@@ -301,20 +300,14 @@ function format( x::T;
     end
 
     if checkwidth && width != -1
-        if length(s) > width
-            s = _replace( s, " " => "", count=length(s)-width )
-            if length(s) > width && endswith( s, " " )
-                s = reverse( _replace( reverse(s), " " => ""; count=length(s)-width ) )
+        if (len = length(s) - width) > 0
+            s = replace( s, " " => ""; count=len )
+            if (len = length(s) - width) > 0
+                endswith(s, " ") && (s = reverse(replace(reverse(s), " " => ""; count=len)))
+                (len = length(s) - width) > 0 && (s = replace( s, "," => ""; count=len ))
             end
-            if length(s) > width
-                s = _replace( s, "," => ""; count=length(s)-width )
-            end
-        elseif length(s) < width
-            if leftjustified
-                s = string(s, repeat( " ", width - length(s) ))
-            else
-                s = string(repeat( " ", width - length(s) ), s)
-            end
+        elseif len < 0
+            s = leftjustified ? string(s, repeat( " ", -len )) : string(repeat( " ", -len), s)
         end
     end
 

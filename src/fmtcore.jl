@@ -2,7 +2,7 @@
 
 ### auxiliary functions
 
-function _repwrite(out::IO, c::Char, n::Int)
+function _repwrite(out::IO, c::AbstractChar, n::Int)
     while n > 0
         write(out, c)
         n -= 1
@@ -12,7 +12,7 @@ end
 
 ### print string or char
 
-function _pfmt_s(out::IO, fs::FormatSpec, s::Union{AbstractString,Char})
+function _pfmt_s(out::IO, fs::FormatSpec, s::Union{AbstractString,AbstractChar})
     wid = fs.width
     slen = length(s)
     if wid <= slen
@@ -63,11 +63,11 @@ _digitchar(x::Integer, ::_Oct) = Char(Int('0') + x)
 _digitchar(x::Integer, ::_Hex) = Char(x < 10 ? '0' + x : 'a' + (x - 10))
 _digitchar(x::Integer, ::_HEX) = Char(x < 10 ? '0' + x : 'A' + (x - 10))
 
-_signchar(x::Number, s::Char) = x < 0 ? '-' :
+_signchar(x::Real, s::AbstractChar) = signbit(x) ? '-' :
                                 s == '+' ? '+' :
                                 s == ' ' ? ' ' : '\0'
 
-function _pfmt_int(out::IO, sch::Char, ip::ASCIIStr, zs::Integer, ax::Integer, op::Op) where {Op}
+function _pfmt_int(out::IO, sch::AbstractChar, ip::ASCIIStr, zs::Integer, ax::Integer, op::Op) where {Op}
     # print sign
     sch != '\0' && write(out, sch)
     # print prefix
@@ -79,7 +79,7 @@ function _pfmt_int(out::IO, sch::Char, ip::ASCIIStr, zs::Integer, ax::Integer, o
     nothing
 end
 
-function _pfmt_intdigits(out::IO, ax::T, op::Op) where {Op,T<:Integer}
+function _pfmt_intdigits(out::IO, ax::T, op::Op) where {Op, T<:Integer}
     b_lb = _div(ax, op)
     b = one(T)
     while b <= b_lb
@@ -130,7 +130,7 @@ end
 
 ### print floating point numbers
 
-function _pfmt_float(out::IO, sch::Char, zs::Integer, intv::Real, decv::Real, prec::Int)
+function _pfmt_float(out::IO, sch::AbstractChar, zs::Integer, intv::Real, decv::Real, prec::Int)
     # print sign
     sch != '\0' && write(out, sch)
 
@@ -138,10 +138,6 @@ function _pfmt_float(out::IO, sch::Char, zs::Integer, intv::Real, decv::Real, pr
     zs > 0 && _repwrite(out, '0', zs)
 
     idecv = round(Integer, decv * exp10(prec))
-    if idecv == exp10(prec)
-        intv += 1
-        idecv = 0
-    end
     # print integer part
     if intv == 0
         write(out, '0')
@@ -153,25 +149,21 @@ function _pfmt_float(out::IO, sch::Char, zs::Integer, intv::Real, decv::Real, pr
     # print decimal part
     if prec > 0
         nd = _ndigits(idecv, _Dec())
-        if nd < prec
-            _repwrite(out, '0', prec - nd)
-        end
+        nd < prec && _repwrite(out, '0', prec - nd)
         _pfmt_intdigits(out, idecv, _Dec())
     end
 end
 
 function _pfmt_f(out::IO, fs::FormatSpec, x::AbstractFloat)
     # separate sign, integer, and decimal part
-    ax = abs(x)
+    rax = round(abs(x), fs.prec)
     sch = _signchar(x, fs.sign)
-    intv = trunc(Integer, ax)
-    decv = ax - intv
+    intv = trunc(Integer, rax)
+    decv = rax - intv
 
     # calculate length
     xlen = _ndigits(intv, _Dec()) + 1 + fs.prec
-    if sch != '\0'
-        xlen += 1
-    end
+    sch != '\0' && (xlen += 1)
 
     # print
     wid = fs.width
@@ -191,17 +183,10 @@ function _pfmt_f(out::IO, fs::FormatSpec, x::AbstractFloat)
     end
 end
 
-function _pfmt_floate(out::IO, sch::Char, zs::Integer, u::Real, prec::Int, e::Int, ec::Char)
+function _pfmt_floate(out::IO, sch::AbstractChar, zs::Integer, u::Real, prec::Int, e::Integer,
+                      ec::AbstractChar)
     intv = trunc(Integer,u)
     decv = u - intv
-    if round(Integer, decv * exp10(prec)) == exp10(prec)
-        intv += 1
-        if intv == 10
-            intv = 1
-            e += 1
-        end
-        decv = 0.
-    end
     _pfmt_float(out, sch, zs, intv, decv, prec)
     write(out, ec)
     if e >= 0
@@ -210,9 +195,10 @@ function _pfmt_floate(out::IO, sch::Char, zs::Integer, u::Real, prec::Int, e::In
         write(out, '-')
         e = -e
     end
-    (e1, e2) = divrem(e, 10)
-    write(out, Char('0' + e1))
-    write(out, Char('0' + e2))
+    if e < 10
+        write(out, '0')
+    end
+    _pfmt_intdigits(out, e, _Dec())
 end
 
 
@@ -224,18 +210,18 @@ function _pfmt_e(out::IO, fs::FormatSpec, x::AbstractFloat)
         e = 0
         u = zero(x)
     else
-        e = floor(Integer,log10(ax))  # exponent
-        u = ax / exp10(e)  # significand
+        rax = signif(ax, fs.prec + 1)
+        e = floor(Integer, log10(rax))  # exponent
+        u = rax * exp10(-e)  # significand
     end
 
     # calculate length
     xlen = 6 + fs.prec
-    if sch != '\0'
-        xlen += 1
-    end
+    abs(e) > 99 && (xlen += _ndigits(abs(e), _Dec()) - 2)
+    sch != '\0' && (xlen += 1)
 
     # print
-    ec = isupper(fs.typ) ? 'E' : 'e'
+    ec = isuppercase(fs.typ) ? 'E' : 'e'
     wid = fs.width
     if wid <= xlen
         _pfmt_floate(out, sch, 0, u, fs.prec, e, ec)
@@ -253,9 +239,23 @@ function _pfmt_e(out::IO, fs::FormatSpec, x::AbstractFloat)
     end
 end
 
+function _pfmt_g(out::IO, fs::FormatSpec, x::AbstractFloat)
+    # number decomposition
+    ax = abs(x)
+    if 1.0e-4 <= ax < 1.0e6
+        _pfmt_f(out, fs, x)
+    else
+        _pfmt_e(out, fs, x)
+    end
+end
+
 function _pfmt_specialf(out::IO, fs::FormatSpec, x::AbstractFloat)
     if isinf(x)
-        _pfmt_s(out, fs, x > 0 ? "Inf" : "-Inf")
+        if x > 0
+            _pfmt_s(out, fs, "Inf")
+        else
+            _pfmt_s(out, fs, "-Inf")
+        end
     else
         @assert isnan(x)
         _pfmt_s(out, fs, "NaN")

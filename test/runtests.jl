@@ -1,10 +1,7 @@
 using Format
-
-@static VERSION < v"0.7.0-DEV" ? (using Base.Test) : (using Test)
-@static VERSION >= v"0.7.0-DEV.3058" && (using Printf)
-@static VERSION < v"0.7.0-DEV" || (using Random)
-
-ts(io) = String(take!(io))
+using Compat.Test
+using Compat.Printf
+using Compat.Random
 
 @testset "cformat"    begin include( "cformat.jl" ) end
 @testset "fmtspec"    begin include( "fmtspec.jl" ) end

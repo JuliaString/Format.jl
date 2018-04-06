@@ -103,9 +103,8 @@ function FormatSpec(s::AbstractString)
 
     if !isempty(s)
         m = match(_spec_regex, s)
-        if m == nothing
-            error("Invalid formatting spec: $(s)")
-        end
+        m == nothing && error("Invalid formatting spec: $(s)")
+
         (a1, a2, a3, a4, a5, a6, a7) = m.captures
 
         # a1: [[fill]align]
@@ -114,36 +113,34 @@ function FormatSpec(s::AbstractString)
                 _align = a1[1]
             else
                 _fill = a1[1]
-                _align = a1[2]
+                _align = a1[nextind(a1, 1)]
             end
         end
 
         # a2: [sign]
-        a2 != nothing && (_sign = a2[1])
+        a2 == nothing || (_sign = a2[1])
 
         # a3: [#]
-        a3 != nothing && (_ipre = true)
+        a3 == nothing || (_ipre = true)
 
         # a4: [0][width]
         if a4 != nothing
             if a4[1] == '0'
                 _zpad = true
-                if length(a4) > 1
-                    _width = parse(Int, a4[2:end])
-                end
+                length(a4) > 1 && (_width = parse(Int, a4[2:end]))
             else
                 _width = parse(Int, a4)
             end
         end
 
         # a5: [,]
-        a5 != nothing && (_tsep = true)
+        a5 == nothing || (_tsep = true)
 
         # a6 [.prec]
-        a6 != nothing && (_prec = parse(Int, a6[2:end]))
+        a6 == nothing || (_prec = parse(Int, a6[2:end]))
 
         # a7: [type]
-        a7 != nothing && (_typ = a7[1])
+        a7 == nothing || (_typ = a7[1])
     end
 
     FormatSpec(_typ;
@@ -160,11 +157,11 @@ end # function FormatSpec
 
 ## formatted printing using a format spec
 
-struct _Dec end
-struct _Oct end
-struct _Hex end
-struct _HEX end
-struct _Bin end
+mutable struct _Dec end
+mutable struct _Oct end
+mutable struct _Hex end
+mutable struct _HEX end
+mutable struct _Bin end
 
 _srepr(x) = repr(x)
 _srepr(x::AbstractString) = x
