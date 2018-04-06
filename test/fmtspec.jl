@@ -14,12 +14,14 @@
     @test fs.tsep == false
 end
 
+_contains(s, r) = @static VERSION < v"0.7.0-DEV" ? contains(s, r) : occursin(r, s)
+
 @testset "Show" begin
     x = FormatSpec("#8,d")
     io = IOBuffer()
     show(io, x)
     str = String(take!(io))
-    @test contains(str, "width = 8") 
+    @test _contains(str, "width = 8")
 end
 
 @testset "Literal incorrect" begin

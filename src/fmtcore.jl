@@ -4,7 +4,7 @@
 
 function _repwrite(out::IO, c::AbstractChar, n::Int)
     while n > 0
-        write(out, c)
+        print(out, c)
         n -= 1
     end
 end
@@ -16,15 +16,15 @@ function _pfmt_s(out::IO, fs::FormatSpec, s::Union{AbstractString,AbstractChar})
     wid = fs.width
     slen = length(s)
     if wid <= slen
-        write(out, s)
+        print(out, s)
     else
         a = fs.align
         if a == '<'
-            write(out, s)
+            print(out, s)
             _repwrite(out, fs.fill, wid-slen)
         else
             _repwrite(out, fs.fill, wid-slen)
-            write(out, s)
+            print(out, s)
         end
     end
 end
@@ -69,13 +69,13 @@ _signchar(x::Real, s::AbstractChar) = signbit(x) ? '-' :
 
 function _pfmt_int(out::IO, sch::AbstractChar, ip::ASCIIStr, zs::Integer, ax::Integer, op::Op) where {Op}
     # print sign
-    sch != '\0' && write(out, sch)
+    sch != '\0' && print(out, sch)
     # print prefix
-    !isempty(ip) && write(out, ip)
+    !isempty(ip) && print(out, ip)
     # print padding zeros
     zs > 0 && _repwrite(out, '0', zs)
     # print actual digits
-    ax == 0 ? write(out, '0') : _pfmt_intdigits(out, ax, op)
+    ax == 0 ? print(out, '0') : _pfmt_intdigits(out, ax, op)
     nothing
 end
 
@@ -88,7 +88,7 @@ function _pfmt_intdigits(out::IO, ax::T, op::Op) where {Op, T<:Integer}
     r = ax
     while b > 0
         (q, r) = divrem(r, b)
-        write(out, _digitchar(q, op))
+        print(out, _digitchar(q, op))
         b = _div(b, op)
     end
 end
@@ -132,7 +132,7 @@ end
 
 function _pfmt_float(out::IO, sch::AbstractChar, zs::Integer, intv::Real, decv::Real, prec::Int)
     # print sign
-    sch != '\0' && write(out, sch)
+    sch != '\0' && print(out, sch)
 
     # print padding zeros
     zs > 0 && _repwrite(out, '0', zs)
@@ -140,12 +140,12 @@ function _pfmt_float(out::IO, sch::AbstractChar, zs::Integer, intv::Real, decv::
     idecv = round(Integer, decv * exp10(prec))
     # print integer part
     if intv == 0
-        write(out, '0')
+        print(out, '0')
     else
         _pfmt_intdigits(out, intv, _Dec())
     end
     # print decimal point
-    write(out, '.')
+    print(out, '.')
     # print decimal part
     if prec > 0
         nd = _ndigits(idecv, _Dec())
@@ -188,15 +188,15 @@ function _pfmt_floate(out::IO, sch::AbstractChar, zs::Integer, u::Real, prec::In
     intv = trunc(Integer,u)
     decv = u - intv
     _pfmt_float(out, sch, zs, intv, decv, prec)
-    write(out, ec)
+    print(out, ec)
     if e >= 0
-        write(out, '+')
+        print(out, '+')
     else
-        write(out, '-')
+        print(out, '-')
         e = -e
     end
     if e < 10
-        write(out, '0')
+        print(out, '0')
     end
     _pfmt_intdigits(out, e, _Dec())
 end
