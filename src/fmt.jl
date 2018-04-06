@@ -15,13 +15,13 @@
 mutable struct DefaultSpec
     typechar::Char
     fspec::FormatSpec
-    DefaultSpec(c::Char) = new(c, FormatSpec(c))
+    DefaultSpec(c::AbstractChar) = new(Char(c), FormatSpec(c))
 end
 
 const DEFAULT_FORMATTERS = Dict{DataType, DefaultSpec}()
 
 # adds a new default formatter for this type
-default_spec!(::Type{T}, c::Char) where {T} =
+default_spec!(::Type{T}, c::AbstractChar) where {T} =
     (DEFAULT_FORMATTERS[T] = DefaultSpec(c); nothing)
 
 # note: types T and K will now both share K's default
@@ -29,7 +29,7 @@ default_spec!(::Type{T}, ::Type{K}) where {T,K} =
     (DEFAULT_FORMATTERS[T] = DEFAULT_FORMATTERS[K]; nothing)
 
 # seed it with some basic default formatters
-for (t, c) in [(Integer,'d'), (AbstractFloat,'f'), (Char,'c'), (AbstractString,'s')]
+for (t, c) in [(Integer,'d'), (AbstractFloat,'f'), (AbstractChar,'c'), (AbstractString,'s')]
     default_spec!(t, c)
 end
 
@@ -65,6 +65,7 @@ end
 default_spec(::Type{<:Integer})        = DEFAULT_FORMATTERS[Integer]
 default_spec(::Type{<:AbstractFloat})  = DEFAULT_FORMATTERS[AbstractFloat]
 default_spec(::Type{<:AbstractString}) = DEFAULT_FORMATTERS[AbstractString]
+default_spec(::Type{<:AbstractChar})   = DEFAULT_FORMATTERS[AbstractChar]
 
 default_spec(::Type{T}) where {T} =
     get(DEFAULT_FORMATTERS, T) do
@@ -79,7 +80,7 @@ fmt_default(x) = default_spec(x).fspec
 
 # first resets the fmt_default spec to the given arg,
 # then continue by updating with args and kwargs
-fmt_default!(::Type{T}, c::Char, args...; kwargs...) where {T} =
+fmt_default!(::Type{T}, c::AbstractChar, args...; kwargs...) where {T} =
     (default_spec!(T,c); fmt_default!(T, args...; kwargs...))
 fmt_default!(::Type{T}, ::Type{K}, args...; kwargs...) where {T,K} =
     (default_spec!(T,K); fmt_default!(T, args...; kwargs...))

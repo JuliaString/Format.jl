@@ -19,10 +19,7 @@
 
 const _numtypchars = Set(['b', 'd', 'e', 'E', 'f', 'F', 'g', 'G', 'n', 'o', 'x', 'X'])
 
-_lowercase(c::Char) = 'A' <= c <= 'Z' ? Char(UInt32(c) + 32) : c
-
-
-_tycls(c::Char) =
+_tycls(c::AbstractChar) =
     (c == 'd' || c == 'n' || c == 'b' || c == 'o' || c == 'x') ? 'i' :
     (c == 'e' || c == 'f' || c == 'g') ? 'f' :
     (c == 'c') ? 'c' :
@@ -41,10 +38,10 @@ struct FormatSpec
     zpad::Bool   # whether to do zero-padding
     tsep::Bool   # whether to use thousand-separator
 
-    function FormatSpec(typ::Char;
-                        fill::Char=' ',
-                        align::Char='\0',
-                        sign::Char='-',
+    function FormatSpec(typ::AbstractChar;
+                        fill::AbstractChar=' ',
+                        align::AbstractChar='\0',
+                        sign::AbstractChar='-',
                         width::Int=-1,
                         prec::Int=-1,
                         ipre::Bool=false,
@@ -52,22 +49,22 @@ struct FormatSpec
                         tsep::Bool=false)
 
         align == '\0' && (align = (typ in _numtypchars) ? '>' : '<')
-        cls = _tycls(_lowercase(typ))
+        cls = _tycls(lowercase(typ))
         cls == 'f' && prec < 0 && (prec = 6)
-        new(cls, typ, fill, align, sign, width, prec, ipre, zpad, tsep)
+        new(cls, Char(typ), Char(fill), Char(align), Char(sign), width, prec, ipre, zpad, tsep)
     end
 
     # copy constructor with overrides
     function FormatSpec(spec::FormatSpec;
-                        fill::Char=spec.fill,
-                        align::Char=spec.align,
-                        sign::Char=spec.sign,
+                        fill::AbstractChar=spec.fill,
+                        align::AbstractChar=spec.align,
+                        sign::AbstractChar=spec.sign,
                         width::Int=spec.width,
                         prec::Int=spec.prec,
                         ipre::Bool=spec.ipre,
                         zpad::Bool=spec.zpad,
                         tsep::Bool=spec.tsep)
-        new(spec.cls, spec.typ, fill, align, sign, width, prec, ipre, zpad, tsep)
+        new(spec.cls, spec.typ, Char(fill), Char(align), Char(sign), width, prec, ipre, zpad, tsep)
     end
 end
 
@@ -165,7 +162,7 @@ mutable struct _Bin end
 
 _srepr(x) = repr(x)
 _srepr(x::AbstractString) = x
-_srepr(x::Char) = string(x)
+_srepr(x::AbstractChar) = string(x)
 _srepr(x::Enum) = string(x)
 
 function printfmt(io::IO, fs::FormatSpec, x)
