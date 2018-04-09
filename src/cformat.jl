@@ -82,17 +82,16 @@ function addcommas( s::ASCIIStr )
 end
 
 function generate_format_string(;
-        width::Int=-1,
-        precision::Int= -1,
-        leftjustified::Bool=false,
-        zeropadding::Bool=false,
-        commas::Bool=false,
-        signed::Bool=false,
-        positivespace::Bool=false,
-        alternative::Bool=false,
-        conversion::ASCIIStr="f" #aAdecEfFiosxX
-    )
-
+                                width::Int=-1,
+                                precision::Int= -1,
+                                leftjustified::Bool=false,
+                                zeropadding::Bool=false,
+                                commas::Bool=false,
+                                signed::Bool=false,
+                                positivespace::Bool=false,
+                                alternative::Bool=false,
+                                conversion::ASCIIStr="f" #aAdecEfFiosxX
+                                )
     s = ['%'%UInt8]
     commas &&
         push!(s, '\'')
@@ -115,25 +114,26 @@ function generate_format_string(;
 end
 
 function format( x::T;
-        width::Int=-1,
-        precision::Int= -1,
-        leftjustified::Bool=false,
-        zeropadding::Bool=false, # when right-justified, use 0 instead of space to fill
-        commas::Bool=false,
-        signed::Bool=false, # +/- prefix
-        positivespace::Bool=false,
-        stripzeros::Bool=(precision== -1),
-        parens::Bool=false, # use (1.00) instead of -1.00. Used in finance
-        alternative::Bool=false, # usually for hex
-        mixedfraction::Bool=false,
-        mixedfractionsep::UTF8Str="_",
-        fractionsep::UTF8Str="/", # num / den
-        fractionwidth::Int = 0,
-        tryden::Int = 0, # if 2 or higher, try to use this denominator, without losing precision
-        suffix::UTF8Str="", # useful for units/%
-        autoscale::Symbol=:none, # :metric, :binary or :finance
-        conversion::ASCIIStr=""
-        ) where {T<:Real}
+                 width::Int=-1,
+                 precision::Int= -1,
+                 leftjustified::Bool=false,
+                 zeropadding::Bool=false, # when right-justified, use 0 instead of space to fill
+                 commas::Bool=false,
+                 signed::Bool=false, # +/- prefix
+                 positivespace::Bool=false,
+                 stripzeros::Bool=(precision== -1),
+                 parens::Bool=false, # use (1.00) instead of -1.00. Used in finance
+                 alternative::Bool=false, # usually for hex
+                 mixedfraction::Bool=false,
+                 mixedfractionsep::UTF8Str="_",
+                 fractionsep::UTF8Str="/", # num / den
+                 fractionwidth::Int = 0,
+                 tryden::Int = 0, # if 2 or higher,
+                                  # try to use this denominator, without losing precision
+                 suffix::UTF8Str="", # useful for units/%
+                 autoscale::Symbol=:none, # :metric, :binary or :finance
+                 conversion::ASCIIStr=""
+                 ) where {T<:Real}
     checkwidth = commas
     if conversion == ""
         if T <: AbstractFloat || T <: Rational && precision != -1
@@ -149,12 +149,9 @@ function format( x::T;
     else
         actualconv = conversion
     end
-    if signed && commas
-        error( "You cannot use signed (+/-) AND commas at the same time")
-    end
-    if T <: Rational && conversion == "s"
-        stripzeros = false
-    end
+    signed && commas && error( "You cannot use signed (+/-) AND commas at the same time")
+
+    T <: Rational && conversion == "s" && (stripzeros = false)
     if ( T <: AbstractFloat && actualconv == "f" || T <: Integer ) && autoscale != :none
         actualconv = "f"
         if autoscale == :metric
@@ -225,11 +222,7 @@ function format( x::T;
         actualx = trunc( Int, x )
         fractional = abs(x) - abs(actualx)
     else
-        if parens && !in( actualconv[1], "xX" )
-            actualx = abs(x)
-        else
-            actualx = x
-        end
+        actualx = (parens && !in( actualconv[1], "xX" )) ? abs(x) : x
     end
     s = cfmt( generate_format_string( width=width,
                                       precision=precision,
@@ -283,10 +276,8 @@ function format( x::T;
             end
         end
         if stripfrom <= rpos
-            if stripfrom == dpos+1 # everything after decimal is 0, so strip the decimal too
-                stripfrom = dpos
-            end
-            s = string(s[1:stripfrom-1], s[rpos+1:end])
+            # everything after decimal is 0, so strip the decimal too
+            s = string(s[1:stripfrom-(stripfrom == dpos+1)], s[rpos+1:end])
             checkwidth = true
         end
     end

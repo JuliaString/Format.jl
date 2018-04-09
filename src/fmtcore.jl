@@ -67,7 +67,8 @@ _signchar(x::Real, s::AbstractChar) = signbit(x) ? '-' :
                                 s == '+' ? '+' :
                                 s == ' ' ? ' ' : '\0'
 
-function _pfmt_int(out::IO, sch::AbstractChar, ip::ASCIIStr, zs::Integer, ax::Integer, op::Op) where {Op}
+function _pfmt_int(out::IO, sch::AbstractChar, ip::ASCIIStr, zs::Integer, ax::Integer,
+                   op::Op) where {Op}
     # print sign
     sch != '\0' && print(out, sch)
     # print prefix
@@ -185,7 +186,7 @@ end
 
 function _pfmt_floate(out::IO, sch::AbstractChar, zs::Integer, u::Real, prec::Int, e::Integer,
                       ec::AbstractChar)
-    intv = trunc(Integer,u)
+    intv = trunc(Integer, u)
     decv = u - intv
     _pfmt_float(out, sch, zs, intv, decv, prec)
     print(out, ec)
@@ -195,9 +196,7 @@ function _pfmt_floate(out::IO, sch::AbstractChar, zs::Integer, u::Real, prec::In
         print(out, '-')
         e = -e
     end
-    if e < 10
-        print(out, '0')
-    end
+    e < 10 && print(out, '0')
     _pfmt_intdigits(out, e, _Dec())
 end
 
@@ -251,11 +250,7 @@ end
 
 function _pfmt_specialf(out::IO, fs::FormatSpec, x::AbstractFloat)
     if isinf(x)
-        if x > 0
-            _pfmt_s(out, fs, "Inf")
-        else
-            _pfmt_s(out, fs, "-Inf")
-        end
+        _pfmt_s(out, fs, x > 0 ? "Inf" : "-Inf")
     else
         @assert isnan(x)
         _pfmt_s(out, fs, "NaN")
