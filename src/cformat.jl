@@ -277,7 +277,7 @@ function format( x::T;
         end
         if stripfrom <= rpos
             # everything after decimal is 0, so strip the decimal too
-            s = string(s[1:stripfrom-(stripfrom == dpos+1)], s[rpos+1:end])
+            s = string(s[1:stripfrom-1-(stripfrom == dpos+1)], s[rpos+1:end])
             checkwidth = true
         end
     end
@@ -298,6 +298,7 @@ function format( x::T;
                 (len = length(s) - width) > 0 && (s = replace( s, "," => ""; count=len ))
             end
         elseif len < 0
+            # Todo: should use lpad or rpad here, can be more efficient
             s = leftjustified ? string(s, repeat( " ", -len )) : string(repeat( " ", -len), s)
         end
     end
