@@ -2,23 +2,19 @@
 
 This package offers Python-style general formatting and c-style numerical formatting (for speed).
 
+[![Format](http://pkg.julialang.org/badges/Format_0.6.svg)](http://pkg.julialang.org/detail/Format)
+[![Format](http://pkg.julialang.org/badges/Format_0.7.svg)](http://pkg.julialang.org/detail/Format)
 [![Build Status](https://travis-ci.org/JuliaString/Format.jl.svg?branch=newmaster)](https://travis-ci.org/JuliaString/Format.jl)
 
 [![Coverage Status](https://coveralls.io/repos/github/JuliaString/Format.jl/badge.svg?branch=newmaster)](https://coveralls.io/github/JuliaString/Format.jl?branch=newmaster)
-
 [![codecov.io](http://codecov.io/github/JuliaString/Format.jl/coverage.svg?branch=newmaster)](http://codecov.io/github/JuliaString/Format.jl?branch=newmaster)
 ---------------
 
 
 ## Getting Started
 
-This package is pure Julia.
-This package is not yet registered, so it needs to be cloned and checked out:
-
-```julia
-Pkg.clone("https://github.com/JuliaString/Format.jl")
-Pkg.checkout("Format", "newmaster")
-```
+This package is pure Julia.  It is now registered, so it can be added simply with `Pkg.add("Format")`.
+Note: The default branch is `newmaster` instead of `master`, remember that if you wish to make a PR on this package. (It is forked off of [Formatting.jl](https://github.com/JuliaIO/Formatting.jl), and I try to keep the master branch up to date with that, and cherry pick or port all necessary changes to `Format`).
 
 To start using the package, you can simply write
 
@@ -26,7 +22,7 @@ To start using the package, you can simply write
 using Format
 ```
 
-This package depends on Julia of version 0.5 or above. It has no other dependencies. The package is MIT-licensed.
+This package depends on Julia of version 0.6 or above, and. The package is MIT-licensed.
 
 
 ## Python-style Types and Functions
