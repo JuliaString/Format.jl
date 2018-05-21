@@ -33,7 +33,7 @@ function make_argspec(s::AbstractString, pos::Int)
             ifil = first(filrange)
             iarg = ifil > 1 ? parse(Int, s[1:prevind(s, ifil)]) : -1
             hasfil = true
-            ff = eval(Symbol(s[ifil+2:end]))
+            ff = m_eval(Symbol(s[ifil+2:end]))
         end
     end
 

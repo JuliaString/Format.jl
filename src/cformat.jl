@@ -1,8 +1,6 @@
-_codeunits(s) = Vector{UInt8}(@static VERSION < v"0.7.0-DEV" ? s : codeunits(s))
-
 formatters = Dict{ ASCIIStr, Function }()
 
-cfmt( fmt::ASCIIStr, x ) = eval(Expr(:call, generate_formatter( fmt ), x))
+cfmt( fmt::ASCIIStr, x ) = m_eval(Expr(:call, generate_formatter( fmt ), x))
 
 function checkfmt(fmt)
     test = Base.Printf.parse( fmt )
