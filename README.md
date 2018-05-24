@@ -2,13 +2,10 @@
 
 This package offers Python-style general formatting and c-style numerical formatting (for speed).
 
-[![Format](http://pkg.julialang.org/badges/Format_0.6.svg)](http://pkg.julialang.org/detail/Format)
-[![Format](http://pkg.julialang.org/badges/Format_0.7.svg)](http://pkg.julialang.org/detail/Format)
-[![Build Status](https://travis-ci.org/JuliaString/Format.jl.svg?branch=newmaster)](https://travis-ci.org/JuliaString/Format.jl)
-
-[![Coverage Status](https://coveralls.io/repos/github/JuliaString/Format.jl/badge.svg?branch=newmaster)](https://coveralls.io/github/JuliaString/Format.jl?branch=newmaster)
-[![codecov.io](http://codecov.io/github/JuliaString/Format.jl/coverage.svg?branch=newmaster)](http://codecov.io/github/JuliaString/Format.jl?branch=newmaster)
----------------
+| **Info** | **Package Status** | **Package Evaluator** | **Coverage** |
+|:------------------:|:------------------:|:---------------------:|:-----------------:|
+| [![License](http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE.md) | [![Build Status](https://travis-ci.org/JuliaString/Format.jl.svg?branch=newmaster)](https://travis-ci.org/JuliaString/Format.jl) | [![Format](http://pkg.julialang.org/badges/Format_0.6.svg)](http://pkg.julialang.org/?pkg=Format) | [![Coverage Status](https://coveralls.io/repos/github/JuliaString/Format.jl/badge.svg?branch=newmaster)](https://coveralls.io/github/JuliaString/Format.jl?branch=newmaster)
+| [![Gitter Chat](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/JuliaString/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) | | [![Format](http://pkg.julialang.org/badges/Format_0.7.svg)](http://pkg.julialang.org/?pkg=Format) | [![codecov.io](http://codecov.io/github/JuliaString/Format.jl/coverage.svg?branch=newmaster)](http://codecov.io/github/JuliaString/Format.jl?branch=newmaster)
 
 
 ## Getting Started
