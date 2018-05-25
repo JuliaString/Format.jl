@@ -1,9 +1,12 @@
+name = "Format"
 desc = "C, Python, and type-defined numeric and string formatting"
 keywords = ["Strings", "Formatting"]
+authors = ["ScottPJones <scottjones@alum.mit.edu>"]
 license = "MIT"
-name = "Format"
 repo = "https://github.com/JuliaString/Format.jl.git"
-deps = ["Compat"]
 git-tree-sha1 = "08516ad5a1004cfd0ac67ddf180a4e94ad7e47e2"
 uuid = "1fa38f19-a742-5d3f-a2b9-30dd87b9d5f8"
 version = "0.6.2"
+
+[deps]
+Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
