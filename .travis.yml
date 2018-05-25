@@ -9,15 +9,15 @@ notifications:
   email: false
 git:
   depth: 99999999
+
 matrix:
-  fast_finish: true
   allow_failures:
     julia: nightly
 
 # uncomment the following lines to override the default test script
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia -e 'f = VERSION < v"0.7.0-DEV" ; f || (using Pkg) ; Pkg.add("Compat") ; if f ; Pkg.clone(pwd()) ; else ; Pkg.add(pwd()) ; end ; Pkg.build("Format"); Pkg.test("Format"; coverage=true)'
+  - julia -e 'if VERSION < v"0.7.0-DEV" ; Pkg.add("Compat") ; Pkg.clone(pwd()) ; else ; using Pkg ; Pkg.add("Compat") ; Pkg.add(pwd()) ; end ; Pkg.build("Format"); Pkg.test("Format"; coverage=true)'
 after_success:
   # push coverage results to Coveralls
   - julia -e 'cd(Pkg.dir("Format")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
