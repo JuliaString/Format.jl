@@ -1,23 +1,26 @@
+## Documentation: http://docs.travis-ci.com/user/languages/julia/
 language: julia
 os:
-    - linux
-    - osx
+  - linux
+  - osx
 julia:
-    - 0.6
-    - nightly
+  - 0.6
+  - nightly
 notifications:
   email: false
 git:
   depth: 99999999
 
+## uncomment the following lines to allow failures on nightly julia
+## (tests will run but not make your overall status red)
 matrix:
   allow_failures:
-    julia: nightly
+  - julia: nightly
 
 # uncomment the following lines to override the default test script
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia -e 'if VERSION < v"0.7.0-DEV" ; Pkg.add("Compat") ; Pkg.clone(pwd()) ; else ; using Pkg ; Pkg.add("Compat") ; Pkg.add(pwd()) ; end ; Pkg.build("Format"); Pkg.test("Format"; coverage=true)'
+  - julia -e 'f = VERSION < v"0.7.0-DEV" ; f || (using Pkg) ; const clone = ifelse(f, Pkg.clone, Pkg.add) ; Pkg.add("Compat") ; clone(pwd()) ; Pkg.build("Format"); Pkg.test("Format"; coverage=true)'
 after_success:
   # push coverage results to Coveralls
   - julia -e 'cd(Pkg.dir("Format")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
