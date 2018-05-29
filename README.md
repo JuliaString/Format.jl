@@ -2,11 +2,38 @@
 
 This package offers Python-style general formatting and c-style numerical formatting (for speed).
 
-| **Info** | **Package Status** | **Package Evaluator** | **Coverage** |
-|:------------------:|:------------------:|:---------------------:|:-----------------:|
-| [![License](http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE.md) | [![Build Status](https://travis-ci.org/JuliaString/Format.jl.svg?branch=newmaster)](https://travis-ci.org/JuliaString/Format.jl) | [![Format](http://pkg.julialang.org/badges/Format_0.6.svg)](http://pkg.julialang.org/?pkg=Format) | [![Coverage Status](https://coveralls.io/repos/github/JuliaString/Format.jl/badge.svg?branch=newmaster)](https://coveralls.io/github/JuliaString/Format.jl?branch=newmaster)
-| [![Gitter Chat](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/JuliaString/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) | | [![Format](http://pkg.julialang.org/badges/Format_0.7.svg)](http://pkg.julialang.org/?pkg=Format) | [![codecov.io](http://codecov.io/github/JuliaString/Format.jl/coverage.svg?branch=newmaster)](http://codecov.io/github/JuliaString/Format.jl?branch=newmaster)
+| **Info** | **Windows** | **Linux & MacOS** | **Package Evaluator** | **CodeCov** | **Coveralls** |
+|:------------------:|:------------------:|:---------------------:|:-----------------:|:---------------------:|:-----------------:|
+| [![][license-img]][license-url] | [![][app-s-img]][app-s-url] | [![][travis-s-img]][travis-url] | [![][pkg-s-img]][pkg-s-url] | [![][codecov-img]][codecov-url] | [![][coverall-s-img]][coverall-s-url]
+| [![][gitter-img]][gitter-url] | [![][app-m-img]][app-m-url] | [![][travis-m-img]][travis-url] | [![][pkg-m-img]][pkg-m-url] | [![][codecov-img]][codecov-url] | [![][coverall-m-img]][coverall-m-url]
 
+[license-img]:  http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat
+[license-url]:  LICENSE.md
+
+[gitter-img]:   https://badges.gitter.im/Join%20Chat.svg
+[gitter-url]:   https://gitter.im/JuliaString/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
+
+[travis-url]:   https://travis-ci.org/JuliaString/Format.jl
+[travis-s-img]: https://travis-ci.org/JuliaString/Format.jl.svg
+[travis-m-img]: https://travis-ci.org/JuliaString/Format.jl.svg?branch=newmaster
+
+[app-s-url]:    https://ci.appveyor.com/project/ScottPJones/format-jl
+[app-m-url]:    https://ci.appveyor.com/project/ScottPJones/format-jl/branch/newmaster
+[app-s-img]:    https://ci.appveyor.com/api/projects/status/9wb580eyjv4k3iej?svg=true
+[app-m-img]:    https://ci.appveyor.com/api/projects/status/9wb580eyjv4k3iej/branch/newmaster?svg=true
+
+[pkg-s-url]:    http://pkg.julialang.org/?pkg=Format
+[pkg-m-url]:    http://pkg.julialang.org/?pkg=Format
+[pkg-s-img]:    http://pkg.julialang.org/badges/Format_0.6.svg
+[pkg-m-img]:    http://pkg.julialang.org/badges/Format_0.7.svg
+
+[codecov-url]:  https://codecov.io/gh/JuliaString/Format.jl
+[codecov-img]:  https://codecov.io/gh/JuliaString/Format.jl/branch/newmaster/graph/badge.svg
+
+[coverall-s-url]: https://coveralls.io/github/JuliaString/Format.jl
+[coverall-m-url]: https://coveralls.io/github/JuliaString/Format.jl?branch=newmaster
+[coverall-s-img]: https://coveralls.io/repos/github/JuliaString/Format.jl/badge.svg
+[coverall-m-img]: https://coveralls.io/repos/github/JuliaString/Format.jl/badge.svg?branch=newmaster
 
 ## Getting Started
 
