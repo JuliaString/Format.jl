@@ -255,6 +255,7 @@ function format( x::T;
         end
     elseif stripzeros && in( actualconv[1], "fFeEs" )
         dpos = Compat.findfirst( isequal('.'), s )
+        dpos === nothing && (dpos = length(s))
         if actualconv[1] in "eEs"
             epos = Compat.findfirst(isequal(actualconv[1] == 'E' ? 'E' : 'e'), s)
             rpos = epos === nothing ? length( s ) : epos-1
