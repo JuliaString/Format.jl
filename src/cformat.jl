@@ -258,7 +258,7 @@ function format( x::T;
         dpos === nothing && (dpos = length(s))
         if actualconv[1] in "eEs"
             epos = Compat.findfirst(isequal(actualconv[1] == 'E' ? 'E' : 'e'), s)
-            rpos = epos === nothing ? length( s ) : epos-1
+            rpos = (epos === nothing) ? length( s ) : (epos-1)
         else
             rpos = length(s)
         end
