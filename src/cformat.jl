@@ -1,6 +1,6 @@
-formatters = Dict{ String, Function }()
+formatters = Dict{ ASCIIStr, Function }()
 
-sprintf1( fmt::String, x ) = eval(Expr(:call, generate_formatter( fmt ), x))
+cfmt( fmt::ASCIIStr, x ) = m_eval(Expr(:call, generate_formatter( fmt ), x))
 
 function checkfmt(fmt)
     test = Base.Printf.parse( fmt )
@@ -8,7 +8,7 @@ function checkfmt(fmt)
         error( "Only one AND undecorated format string is allowed")
 end
 
-function generate_formatter( fmt::String )
+function generate_formatter( fmt::ASCIIStr )
     global formatters
 
     haskey( formatters, fmt ) && return formatters[fmt]
@@ -22,7 +22,7 @@ function generate_formatter( fmt::String )
     conversion in "sduifF" ||
         error( string("thousand separator not defined for ", conversion, " conversion") )
 
-    fmtactual = replace( fmt, "'" => "", count=1 )
+    fmtactual = replace( fmt, "'" => ""; count=1 )
     checkfmt( fmtactual )
     conversion in "sfF" ||
         return (formatters[ fmt ] = @eval(x->checkcommas(@sprintf( $fmtactual, x ))))
@@ -63,86 +63,75 @@ function checkcommas(s)
     s
 end
 
-
-function addcommas( s::String )
+function addcommas( s::ASCIIStr )
     len = length(s)
     t = ""
     for i in 1:3:len
         subs = s[max(1,len-i-1):len-i+1]
         if i == 1
             t = subs
+        elseif match( r"[0-9]", subs ) != nothing
+            t = string(subs, ',', t)
         else
-            if match( r"[0-9]", subs ) != nothing
-                t = subs * "," * t
-            else
-                t = subs * t
-            end
+            t = string(subs, t)
         end
     end
-    return t
+    t
 end
 
 function generate_format_string(;
-        width::Int=-1,
-        precision::Int= -1,
-        leftjustified::Bool=false,
-        zeropadding::Bool=false,
-        commas::Bool=false,
-        signed::Bool=false,
-        positivespace::Bool=false,
-        alternative::Bool=false,
-        conversion::String="f" #aAdecEfFiosxX
-        )
-    s = "%"
-    if commas
-        s *= "'"
-    end
-    if alternative && in( conversion[1], "aAeEfFoxX" )
-        s *= "#"
-    end
-    if zeropadding && !leftjustified && width != -1
-        s *= "0"
-    end
-
+                                width::Int=-1,
+                                precision::Int= -1,
+                                leftjustified::Bool=false,
+                                zeropadding::Bool=false,
+                                commas::Bool=false,
+                                signed::Bool=false,
+                                positivespace::Bool=false,
+                                alternative::Bool=false,
+                                conversion::ASCIIStr="f" #aAdecEfFiosxX
+                                )
+    s = ['%'%UInt8]
+    commas &&
+        push!(s, '\'')
+    alternative && in( conversion[1], "aAeEfFoxX" ) &&
+        push!(s, '#')
+    zeropadding && !leftjustified && width != -1 &&
+        push!(s, '0')
     if signed
-        s *= "+"
+        push!(s, '+')
     elseif positivespace
-        s *= " "
+        push!(s, ' ')
     end
-
     if width != -1
-        if leftjustified
-            s *= "-" * string( width )
-        else
-            s *= string( width )
-        end
+        leftjustified && push!(s, '-')
+        append!(s, _codeunits(string( width )))
     end
-    if precision != -1
-        s *= "." * string( precision )
-    end
-    s * conversion
+    precision != -1 &&
+        append!(s, _codeunits(string( '.', precision )))
+    String(append!(s, _codeunits(conversion)))
 end
 
 function format( x::T;
-        width::Int=-1,
-        precision::Int= -1,
-        leftjustified::Bool=false,
-        zeropadding::Bool=false, # when right-justified, use 0 instead of space to fill
-        commas::Bool=false,
-        signed::Bool=false, # +/- prefix
-        positivespace::Bool=false,
-        stripzeros::Bool=(precision== -1),
-        parens::Bool=false, # use (1.00) instead of -1.00. Used in finance
-        alternative::Bool=false, # usually for hex
-        mixedfraction::Bool=false,
-        mixedfractionsep::AbstractString="_",
-        fractionsep::AbstractString="/", # num / den
-        fractionwidth::Int = 0,
-        tryden::Int = 0, # if 2 or higher, try to use this denominator, without losing precision
-        suffix::AbstractString="", # useful for units/%
-        autoscale::Symbol=:none, # :metric, :binary or :finance
-        conversion::String=""
-        ) where {T<:Real}
+                 width::Int=-1,
+                 precision::Int= -1,
+                 leftjustified::Bool=false,
+                 zeropadding::Bool=false, # when right-justified, use 0 instead of space to fill
+                 commas::Bool=false,
+                 signed::Bool=false, # +/- prefix
+                 positivespace::Bool=false,
+                 stripzeros::Bool=(precision== -1),
+                 parens::Bool=false, # use (1.00) instead of -1.00. Used in finance
+                 alternative::Bool=false, # usually for hex
+                 mixedfraction::Bool=false,
+                 mixedfractionsep::UTF8Str="_",
+                 fractionsep::UTF8Str="/", # num / den
+                 fractionwidth::Int = 0,
+                 tryden::Int = 0, # if 2 or higher,
+                                  # try to use this denominator, without losing precision
+                 suffix::UTF8Str="", # useful for units/%
+                 autoscale::Symbol=:none, # :metric, :binary or :finance
+                 conversion::ASCIIStr=""
+                 ) where {T<:Real}
     checkwidth = commas
     if conversion == ""
         if T <: AbstractFloat || T <: Rational && precision != -1
@@ -158,12 +147,9 @@ function format( x::T;
     else
         actualconv = conversion
     end
-    if signed && commas
-        error( "You cannot use signed (+/-) AND commas at the same time")
-    end
-    if T <: Rational && conversion == "s"
-        stripzeros = false
-    end
+    signed && commas && error( "You cannot use signed (+/-) AND commas at the same time")
+
+    T <: Rational && conversion == "s" && (stripzeros = false)
     if ( T <: AbstractFloat && actualconv == "f" || T <: Integer ) && autoscale != :none
         actualconv = "f"
         if autoscale == :metric
@@ -180,7 +166,7 @@ function format( x::T;
                 for (mag, sym) in scales
                     if abs(x) >= mag
                         x /= mag
-                        suffix = sym * suffix
+                        suffix = string(sym, suffix)
                         break
                     end
                 end
@@ -193,7 +179,7 @@ function format( x::T;
                 for (mag,sym) in smallscales
                     if abs(x) < mag*10
                         x /= mag
-                        suffix = sym * suffix
+                        suffix = string(sym, suffix)
                         break
                     end
                 end
@@ -220,7 +206,7 @@ function format( x::T;
             for (mag, sym) in scales
                 if abs(x) >= mag
                     x /= mag
-                    suffix = sym * suffix
+                    suffix = string(sym, suffix)
                     break
                 end
             end
@@ -234,22 +220,19 @@ function format( x::T;
         actualx = trunc( Int, x )
         fractional = abs(x) - abs(actualx)
     else
-        if parens && !in( actualconv[1], "xX" )
-            actualx = abs(x)
-        else
-            actualx = x
-        end
+        actualx = (parens && !in( actualconv[1], "xX" )) ? abs(x) : x
     end
-    s = sprintf1( generate_format_string( width=width,
-        precision=precision,
-        leftjustified=leftjustified,
-        zeropadding=zeropadding,
-        commas=commas,
-        signed=signed,
-        positivespace=positivespace,
-        alternative=alternative,
-        conversion=actualconv
-    ),actualx)
+    s = cfmt( generate_format_string( width=width,
+                                      precision=precision,
+                                      leftjustified=leftjustified,
+                                      zeropadding=zeropadding,
+                                      commas=commas,
+                                      signed=signed,
+                                      positivespace=positivespace,
+                                      alternative=alternative,
+                                      conversion=actualconv
+                                      ),
+              actualx)
 
     if T <:Rational && conversion == "s"
         if mixedfraction && fractional != 0
@@ -259,20 +242,12 @@ function format( x::T;
                 num *= div(tryden,den)
                 den = tryden
             end
-            fs = string( num ) * fractionsep * string(den)
-            if length(fs) < fractionwidth
-                fs = repeat( "0", fractionwidth - length(fs) ) * fs
-            end
-            s = rstrip(s)
-            if actualx != 0
-                s = rstrip(s) * mixedfractionsep * fs
-            else
-                if !nonneg
-                    s = "-" * fs
-                else
-                    s = fs
-                end
-            end
+            fs = string( num, fractionsep, den)
+            length(fs) < fractionwidth &&
+                (fs = string(repeat( "0", fractionwidth - length(fs) ), fs))
+            s = (actualx != 0
+                 ? string(rstrip(s), mixedfractionsep, fs)
+                 : (nonneg ? fs : string('-', fs)))
             checkwidth = true
         elseif !mixedfraction
             s = replace( s, "//" => fractionsep )
@@ -280,17 +255,10 @@ function format( x::T;
         end
     elseif stripzeros && in( actualconv[1], "fFeEs" )
         dpos = Compat.findfirst( isequal('.'), s )
-        if in( actualconv[1], "eEs" )
-            if in( actualconv[1], "es" )
-                epos = Compat.findfirst( isequal('e'), s )
-            else
-                epos = Compat.findfirst( isequal('E'), s )
-            end
-            if epos === nothing
-                rpos = length( s )
-            else
-                rpos = epos-1
-            end
+        dpos === nothing && (dpos = length(s))
+        if actualconv[1] in "eEs"
+            epos = Compat.findfirst(isequal(actualconv[1] == 'E' ? 'E' : 'e'), s)
+            rpos = (epos === nothing) ? length( s ) : (epos-1)
         else
             rpos = length(s)
         end
@@ -307,42 +275,30 @@ function format( x::T;
             end
         end
         if stripfrom <= rpos
-            if stripfrom == dpos+1 # everything after decimal is 0, so strip the decimal too
-                stripfrom = dpos
-            end
-            s = s[1:stripfrom-1] * s[rpos+1:end]
+            # everything after decimal is 0, so strip the decimal too
+            s = string(s[1:stripfrom-1-(stripfrom == dpos+1)], s[rpos+1:end])
             checkwidth = true
         end
     end
 
-    s *= suffix
+    s = string(s, suffix)
 
     if parens && !in( actualconv[1], "xX" )
         # if zero or positive, we still need 1 white space on the right
-        if nonneg
-            s = " " * strip(s) * " "
-        else
-            s = "(" * strip(s) * ")"
-        end
-
+        s = nonneg ? string(' ', strip(s), ' ') : string('(', strip(s), ')')
         checkwidth = true
     end
 
     if checkwidth && width != -1
-        if length(s) > width
-            s = replace( s, " " => "", count=length(s)-width )
-            if length(s) > width && endswith( s, " " )
-                s = reverse( replace( reverse(s), " " => "", count=length(s)-width ) )
+        if (len = length(s) - width) > 0
+            s = replace( s, " " => ""; count=len )
+            if (len = length(s) - width) > 0
+                endswith(s, " ") && (s = reverse(replace(reverse(s), " " => ""; count=len)))
+                (len = length(s) - width) > 0 && (s = replace( s, "," => ""; count=len ))
             end
-            if length(s) > width
-                s = replace( s, "," => "", count=length(s)-width )
-            end
-        elseif length(s) < width
-            if leftjustified
-                s = s * repeat( " ", width - length(s) )
-            else
-                s = repeat( " ", width - length(s) ) * s
-            end
+        elseif len < 0
+            # Todo: should use lpad or rpad here, can be more efficient
+            s = leftjustified ? string(s, repeat( " ", -len )) : string(repeat( " ", -len), s)
         end
     end
 

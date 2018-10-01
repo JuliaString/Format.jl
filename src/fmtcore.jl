@@ -4,7 +4,7 @@
 
 ### print char n times
 
-function _repprint(out::IO, c::Char, n::Int)
+function _repprint(out::IO, c::AbstractChar, n::Int)
     while n > 0
         print(out, c)
         n -= 1
@@ -14,7 +14,7 @@ end
 
 ### print string or char
 
-function _pfmt_s(out::IO, fs::FormatSpec, s::Union{AbstractString,Char})
+function _pfmt_s(out::IO, fs::FormatSpec, s::Union{AbstractString,AbstractChar})
     wid = fs.width
     slen = length(s)
     if wid <= slen
@@ -59,35 +59,27 @@ _ipre(::Union{_Hex, _HEX}) = "0x"
 _ipre(::_Oct) = "0o"
 _ipre(::_Bin) = "0b"
 
-_digitchar(x::Integer, ::_Bin) = Char(x == 0 ? '0' : '1')
-_digitchar(x::Integer, ::_Dec) = Char('0' + x)
-_digitchar(x::Integer, ::_Oct) = Char('0' + x)
+_digitchar(x::Integer, ::_Bin) = x == 0 ? '0' : '1'
+_digitchar(x::Integer, ::_Dec) = Char(Int('0') + x)
+_digitchar(x::Integer, ::_Oct) = Char(Int('0') + x)
 _digitchar(x::Integer, ::_Hex) = Char(x < 10 ? '0' + x : 'a' + (x - 10))
 _digitchar(x::Integer, ::_HEX) = Char(x < 10 ? '0' + x : 'A' + (x - 10))
 
-_signchar(x::Real, s::Char) = signbit(x) ? '-' :
+_signchar(x::Real, s::AbstractChar) = signbit(x) ? '-' :
                                 s == '+' ? '+' :
                                 s == ' ' ? ' ' : '\0'
 
-function _pfmt_int(out::IO, sch::Char, ip::String, zs::Integer, ax::Integer, op::Op) where {Op}
+function _pfmt_int(out::IO, sch::AbstractChar, ip::ASCIIStr, zs::Integer, ax::Integer,
+                   op::Op) where {Op}
     # print sign
-    if sch != '\0'
-        print(out, sch)
-    end
+    sch != '\0' && print(out, sch)
     # print prefix
-    if !isempty(ip)
-        print(out, ip)
-    end
+    !isempty(ip) && print(out, ip)
     # print padding zeros
-    if zs > 0
-        _repprint(out, '0', zs)
-    end
+    zs > 0 && _repprint(out, '0', zs)
     # print actual digits
-    if ax == 0
-        print(out, '0')
-    else
-        _pfmt_intdigits(out, ax, op)
-    end
+    ax == 0 ? print(out, '0') : _pfmt_intdigits(out, ax, op)
+    nothing
 end
 
 function _pfmt_intdigits(out::IO, ax::T, op::Op) where {Op, T<:Integer}
@@ -141,15 +133,13 @@ end
 
 ### print floating point numbers
 
-function _pfmt_float(out::IO, sch::Char, zs::Integer, intv::Real, decv::Real, prec::Int)
+function _pfmt_float(out::IO, sch::AbstractChar, zs::Integer, intv::Real, decv::Real, prec::Int)
     # print sign
-    if sch != '\0'
-        print(out, sch)
-    end
+    sch != '\0' && print(out, sch)
+
     # print padding zeros
-    if zs > 0
-        _repprint(out, '0', zs)
-    end
+    zs > 0 && _repprint(out, '0', zs)
+
     idecv = round(Integer, decv * exp10(prec))
     # print integer part
     if intv == 0
@@ -162,26 +152,21 @@ function _pfmt_float(out::IO, sch::Char, zs::Integer, intv::Real, decv::Real, pr
     # print decimal part
     if prec > 0
         nd = _ndigits(idecv, _Dec())
-        if nd < prec
-            _repprint(out, '0', prec - nd)
-        end
+        nd < prec && _repprint(out, '0', prec - nd)
         _pfmt_intdigits(out, idecv, _Dec())
     end
 end
 
 function _pfmt_f(out::IO, fs::FormatSpec, x::AbstractFloat)
     # separate sign, integer, and decimal part
-    # when https://github.com/JuliaLang/Compat.jl/pull/537 is merged, remove base = 10
-    rax = Compat.round(abs(x), digits = fs.prec, base = 10)
+    rax = Compat.round(abs(x), digits = fs.prec)
     sch = _signchar(x, fs.sign)
     intv = trunc(Integer, rax)
     decv = rax - intv
 
     # calculate length
     xlen = _ndigits(intv, _Dec()) + 1 + fs.prec
-    if sch != '\0'
-        xlen += 1
-    end
+    sch != '\0' && (xlen += 1)
 
     # print
     wid = fs.width
@@ -201,8 +186,9 @@ function _pfmt_f(out::IO, fs::FormatSpec, x::AbstractFloat)
     end
 end
 
-function _pfmt_floate(out::IO, sch::Char, zs::Integer, u::Real, prec::Int, e::Integer, ec::Char)
-    intv = trunc(Integer,u)
+function _pfmt_floate(out::IO, sch::AbstractChar, zs::Integer, u::Real, prec::Int, e::Integer,
+                      ec::AbstractChar)
+    intv = trunc(Integer, u)
     decv = u - intv
     if intv == 0 && decv != 0
         intv = 1
@@ -216,12 +202,9 @@ function _pfmt_floate(out::IO, sch::Char, zs::Integer, u::Real, prec::Int, e::In
         print(out, '-')
         e = -e
     end
-    if e < 10
-        print(out, '0')
-    end
+    e < 10 && print(out, '0')
     _pfmt_intdigits(out, e, _Dec())
 end
-
 
 function _pfmt_e(out::IO, fs::FormatSpec, x::AbstractFloat)
     # extract sign, significand, and exponent
@@ -231,20 +214,15 @@ function _pfmt_e(out::IO, fs::FormatSpec, x::AbstractFloat)
         e = 0
         u = zero(x)
     else
-        # when https://github.com/JuliaLang/Compat.jl/pull/537 is merged, remove base = 10
-        rax = Compat.round(ax, sigdigits = fs.prec + 1, base = 10)
+        rax = Compat.round(ax, sigdigits = fs.prec + 1)
         e = floor(Integer, log10(rax))  # exponent
         u = rax * exp10(-e)  # significand
     end
 
     # calculate length
     xlen = 6 + fs.prec
-    if abs(e) > 99
-        xlen += _ndigits(abs(e), _Dec()) - 2
-    end
-    if sch != '\0'
-        xlen += 1
-    end
+    abs(e) > 99 && (xlen += _ndigits(abs(e), _Dec()) - 2)
+    sch != '\0' && (xlen += 1)
 
     # print
     ec = isuppercase(fs.typ) ? 'E' : 'e'
@@ -265,7 +243,6 @@ function _pfmt_e(out::IO, fs::FormatSpec, x::AbstractFloat)
     end
 end
 
-
 function _pfmt_g(out::IO, fs::FormatSpec, x::AbstractFloat)
     # number decomposition
     ax = abs(x)
@@ -277,17 +254,11 @@ function _pfmt_g(out::IO, fs::FormatSpec, x::AbstractFloat)
 end
 
 function _pfmt_specialf(out::IO, fs::FormatSpec, x::AbstractFloat)
-    if isinf(x) 
-        if x > 0
-            _pfmt_s(out, fs, "Inf")
-        else
-            _pfmt_s(out, fs, "-Inf")
-        end
+    if isinf(x)
+        _pfmt_s(out, fs, x > 0 ? "Inf" : "-Inf")
     else
         @assert isnan(x)
         _pfmt_s(out, fs, "NaN")
     end
 end
-
-
 

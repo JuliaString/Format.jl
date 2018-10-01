@@ -1,42 +1,52 @@
-# Formatting
+# Format
 
 This package offers Python-style general formatting and c-style numerical formatting (for speed).
 
-| **PackageEvaluator**                                            | **Build Status**                                                                                |
-|:---------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
-|[![][pkg-0.6-img]][pkg-0.6-url] | [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] [![][codecov-img]][codecov-url] |
+| **Info** | **Windows** | **Linux & MacOS** | **Package Evaluator** | **CodeCov** | **Coveralls** |
+|:------------------:|:------------------:|:---------------------:|:-----------------:|:---------------------:|:-----------------:|
+| [![][license-img]][license-url] | [![][app-s-img]][app-s-url] | [![][travis-s-img]][travis-url] | [![][pkg-s-img]][pkg-s-url] | [![][codecov-img]][codecov-url] | [![][coverall-s-img]][coverall-s-url]
+| [![][gitter-img]][gitter-url] | [![][app-m-img]][app-m-url] | [![][travis-m-img]][travis-url] | [![][pkg-m-img]][pkg-m-url] | [![][codecov-img]][codecov-url] | [![][coverall-m-img]][coverall-m-url]
 
+[license-img]:  http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat
+[license-url]:  LICENSE.md
 
-[travis-img]: https://travis-ci.org/JuliaIO/Formatting.jl.svg?branch=master
-[travis-url]: https://travis-ci.org/JuliaIO/Formatting.jl
+[gitter-img]:   https://badges.gitter.im/Join%20Chat.svg
+[gitter-url]:   https://gitter.im/JuliaString/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
 
-[appveyor-img]: https://ci.appveyor.com/api/projects/status/all0t7gefcl5dgv1/branch/master?svg=true
-[appveyor-url]: https://ci.appveyor.com/project/jmkuhn/formatting-jl/branch/master
+[travis-url]:   https://travis-ci.org/JuliaString/Format.jl
+[travis-s-img]: https://travis-ci.org/JuliaString/Format.jl.svg
+[travis-m-img]: https://travis-ci.org/JuliaString/Format.jl.svg?branch=newmaster
 
-[codecov-img]: https://codecov.io/gh/JuliaIO/Formatting.jl/branch/master/graph/badge.svg
-[codecov-url]: https://codecov.io/gh/JuliaIO/Formatting.jl
+[app-s-url]:    https://ci.appveyor.com/project/ScottPJones/format-jl
+[app-m-url]:    https://ci.appveyor.com/project/ScottPJones/format-jl/branch/newmaster
+[app-s-img]:    https://ci.appveyor.com/api/projects/status/9wb580eyjv4k3iej?svg=true
+[app-m-img]:    https://ci.appveyor.com/api/projects/status/9wb580eyjv4k3iej/branch/newmaster?svg=true
 
-[pkg-0.6-img]: http://pkg.julialang.org/badges/Formatting_0.6.svg
-[pkg-0.6-url]: http://pkg.julialang.org/?pkg=Formatting
+[pkg-s-url]:    http://pkg.julialang.org/?pkg=Format
+[pkg-m-url]:    http://pkg.julialang.org/?pkg=Format
+[pkg-s-img]:    http://pkg.julialang.org/badges/Format_0.6.svg
+[pkg-m-img]:    http://pkg.julialang.org/badges/Format_0.7.svg
 
----------------
+[codecov-url]:  https://codecov.io/gh/JuliaString/Format.jl
+[codecov-img]:  https://codecov.io/gh/JuliaString/Format.jl/branch/newmaster/graph/badge.svg
 
+[coverall-s-url]: https://coveralls.io/github/JuliaString/Format.jl
+[coverall-m-url]: https://coveralls.io/github/JuliaString/Format.jl?branch=newmaster
+[coverall-s-img]: https://coveralls.io/repos/github/JuliaString/Format.jl/badge.svg
+[coverall-m-img]: https://coveralls.io/repos/github/JuliaString/Format.jl/badge.svg?branch=newmaster
 
 ## Getting Started
 
-This package is pure Julia. Setting up this package is like setting up other Julia packages:
-
-```julia
-Pkg.add("Formatting")
-```
+This package is pure Julia.  It is now registered, so it can be added simply with `Pkg.add("Format")`.
+Note: The default branch is `newmaster` instead of `master`, remember that if you wish to make a PR on this package. (It is forked off of [Formatting.jl](https://github.com/JuliaIO/Formatting.jl), and I try to keep the master branch up to date with that, and cherry pick or port all necessary changes to `Format`).
 
 To start using the package, you can simply write
 
 ```julia
-using Formatting
+using Format
 ```
 
-This package depends on Julia of version 0.2 or above. It has no other dependencies. The package is MIT-licensed.
+This package depends on Julia of version 0.6 or above, and. The package is MIT-licensed.
 
 
 ## Python-style Types and Functions
@@ -111,9 +121,9 @@ One can use ``printfmt`` and ``printfmtln`` for formatted printing:
 
 #### Formatted String
 
-One can use ``fmt`` to format a single value into a string, or ``format`` to format one to multiple arguments into a string using an format expression.
+One can use ``pyfmt`` to format a single value into a string, or ``format`` to format one to multiple arguments into a string using an format expression.
 
-- **fmt**(fspec, a)
+- **pyfmt**(fspec, a)
 
     Format a single value using a format specification given by ``fspec``, where ``fspec`` can be either a string or an instance of ``FormatSpec``.
 
@@ -146,7 +156,7 @@ stripping trailing zeros, and mixed fractions.
 ### Usage and Implementation
 
 The idea here is that the package compiles a function only once for each unique
-format string within the `Formatting.*` name space, so repeated use is faster.
+format string within the `Format.*` name space, so repeated use is faster.
 Unrelated parts of a session using the same format string would reuse the same
 function, avoiding redundant compilation. To avoid the proliferation of
 functions, we limit the usage to only 1 argument. Practical consideration
@@ -155,10 +165,10 @@ seems manageable.
 
 Usage
 ```julia
-using Formatting
+using Format
 
 fmt = "%10.3f"
-s = sprintf1( fmt, 3.14159 ) # usage 1. Quite performant. Easiest to switch to.
+s = cfmt( fmt, 3.14159 ) # usage 1. Quite performant. Easiest to switch to.
 
 fmtrfunc = generate_formatter( fmt ) # usage 2. This bypass repeated lookup of cached function. Most performant.
 s = fmtrfunc( 3.14159 )
@@ -167,7 +177,7 @@ s = format( 3.14159, precision=3 ) # usage 3. Most flexible, with some non-print
 ```
 ### Speed
 
-`sprintf1`: Speed penalty is about 20% for floating point and 30% for integers.
+`cfmt`: Speed penalty is about 20% for floating point and 30% for integers.
 
 If the formatter is stored and used instead (see the example using `generate_formatter` above),
 the speed penalty reduces to 10% for floating point and 15% for integers.

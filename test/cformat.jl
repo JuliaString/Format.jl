@@ -1,14 +1,11 @@
-using Formatting
-using Compat.Test
-using Compat.Printf
-using Compat.Random
-
 _erfinv(z) = sqrt(π) * Base.Math.@horner(z, 0, 1, 0, π/12, 0, 7π^2/480, 0, 127π^3/40320, 0,
                                          4369π^4/5806080, 0, 34807π^5/182476800) / 2
 
+set_seed!(seed) = @static VERSION < v"0.7.0" ? srand(seed) : Random.seed!(seed)
+
 function test_equality()
     println( "test cformat equality...")
-    srand(10)
+    set_seed!(10)
     fmts = [ (x->@sprintf("%10.4f",x), "%10.4f"),
              (x->@sprintf("%f", x),    "%f"),
              (x->@sprintf("%e", x),    "%e"),
@@ -19,7 +16,7 @@ function test_equality()
         for i in 1:10000
             n = _erfinv( rand() * 1.99 - 1.99/2.0 )
             expect = mfmtr( n )
-            actual = sprintf1( fmt, n )
+            actual = cfmt( fmt, n )
             @test expect == actual
         end
     end
@@ -32,7 +29,7 @@ function test_equality()
         for i in 1:10000
             j = round(Int, _erfinv( rand() * 1.99 - 1.99/2.0 ) * 100000 )
             expect = mfmtr( j )
-            actual = sprintf1( fmt, j )
+            actual = cfmt( fmt, j )
             @test expect == actual
         end
     end
@@ -50,7 +47,7 @@ function native_int()
 end
 function runtime_int()
     for i in 1:200000
-        sprintf1( "%10d", i )
+        cfmt( "%10d", i )
     end
 end
 function runtime_int_bypass()
@@ -68,20 +65,20 @@ println( "integer sprintf speed, bypass repeated lookup")
 @time runtime_int_bypass()
 
 function native_float()
-    srand( 10 )
+    set_seed!( 10 )
     for i in 1:200000
         @sprintf( "%10.4f", _erfinv( rand() ) )
     end
 end
 function runtime_float()
-    srand( 10 )
+    set_seed!( 10 )
     for i in 1:200000
-        sprintf1( "%10.4f", _erfinv( rand() ) )
+        cfmt( "%10.4f", _erfinv( rand() ) )
     end
 end
 function runtime_float_bypass()
     f = generate_formatter( "%10.4f" )
-    srand( 10 )
+    set_seed!( 10 )
     for i in 1:200000
         f( _erfinv( rand() ) )
     end
@@ -95,20 +92,18 @@ println( "float64 sprintf speed")
 println( "float64 sprintf speed, bypass repeated lookup")
 @time runtime_float_bypass()
 
-function test_commas()
-    println( "\ntest commas..." )
-    @test sprintf1( "%'d", 1000 ) == "1,000"
-    @test sprintf1( "%'d", -1000 ) == "-1,000"
-    @test sprintf1( "%'d", 100 ) == "100"
-    @test sprintf1( "%'d", -100 ) == "-100"
-    @test sprintf1( "%'f", Inf ) == "Inf"
-    @test sprintf1( "%'f", -Inf ) == "-Inf"
-    @test sprintf1( "%'s", 1000.0 ) == "1,000.0"
-    @test sprintf1( "%'s", 1234567.0 ) == "1.234567e6"
+@testset "test commas..." begin
+    @test cfmt( "%'d", 1000 ) == "1,000"
+    @test cfmt( "%'d", -1000 ) == "-1,000"
+    @test cfmt( "%'d", 100 ) == "100"
+    @test cfmt( "%'d", -100 ) == "-100"
+    @test cfmt( "%'f", Inf ) == "Inf"
+    @test cfmt( "%'f", -Inf ) == "-Inf"
+    @test cfmt( "%'s", 1000.0 ) == "1,000.0"
+    @test cfmt( "%'s", 1234567.0 ) == "1.234567e6"
 end
 
-function test_format()
-    println( "test format...")
+@testset "test format..." begin
     @test format( 10 ) == "10"
     @test format( 10.0 ) == "10"
     @test format( 10.0, precision=2 ) == "10.00"
@@ -122,16 +117,22 @@ function test_format()
 
     @test format( 1.0, conversion="e", stripzeros=true ) == "1e+00"
     @test format( 1.0, conversion="e", precision=4 ) == "1.0000e+00"
+    @test format( 1.0, signed=true ) == "+1"
+    @test format( 1.0, positivespace=true ) == " 1"
+    @test_throws ErrorException format( 1234.56, signed=true, commas=true )
+    @test format( 1.0, width=6, precision=4, stripzeros=true, leftjustified=true) == "1     "
+end
 
-    # hex output
+@testset "hex output" begin
     @test format( 1118, conversion="x" ) == "45e"
     @test format( 1118, width=4, conversion="x" ) == " 45e"
     @test format( 1118, width=4, zeropadding=true, conversion="x" ) == "045e"
     @test format( 1118, alternative=true, conversion="x" ) == "0x45e"
     @test format( 1118, width=4, alternative=true, conversion="x" ) == "0x45e"
     @test format( 1118, width=6, alternative=true, conversion="x", zeropadding=true ) == "0x045e"
+end
 
-    # mixed fractions
+@testset "mixed fractions" begin
     @test format( 3//2, mixedfraction=true ) == "1_1/2"
     @test format( -3//2, mixedfraction=true ) == "-1_1/2"
     @test format( 3//100, mixedfraction=true ) == "3/100"
@@ -145,8 +146,9 @@ function test_format()
     @test format( -302//100, mixedfraction=true,tryden = 100 ) == "-3_2/100"
     @test format( -302//30, mixedfraction=true,tryden = 100 ) == "-10_1/15" # lose precision otherwise
     @test format( -302//100, mixedfraction=true,tryden = 100,fractionwidth=6 ) == "-3_02/100" # lose precision otherwise
+end
 
-    #commas
+@testset "commas" begin
     @test format( 12345678, width=10, commas=true ) == "12,345,678"
     # it would try to squeeze out the commas
     @test format( 12345678, width=9, commas=true ) == "12345,678"
@@ -185,5 +187,3 @@ function test_format()
     @test format( 100, precision=2, suffix="%", conversion="f" ) == "100.00%"
 end
 
-test_commas()
-test_format()
