@@ -159,8 +159,7 @@ end
 
 function _pfmt_f(out::IO, fs::FormatSpec, x::AbstractFloat)
     # separate sign, integer, and decimal part
-    rax = (@static VERSION < v"0.7.0-DEV.4804" ? round(abs(x), fs.prec) :
-           round(abs(x); digits=fs.prec))
+    rax = Compat.round(abs(x), digits = fs.prec)
     sch = _signchar(x, fs.sign)
     intv = trunc(Integer, rax)
     decv = rax - intv
@@ -191,6 +190,10 @@ function _pfmt_floate(out::IO, sch::AbstractChar, zs::Integer, u::Real, prec::In
                       ec::AbstractChar)
     intv = trunc(Integer, u)
     decv = u - intv
+    if intv == 0 && decv != 0
+        intv = 1
+        decv -= 1
+    end
     _pfmt_float(out, sch, zs, intv, decv, prec)
     print(out, ec)
     if e >= 0
@@ -203,36 +206,6 @@ function _pfmt_floate(out::IO, sch::AbstractChar, zs::Integer, u::Real, prec::In
     _pfmt_intdigits(out, e, _Dec())
 end
 
-# Pull in definition of signif from v0.6.2 base, since it is currently broken for
-# BigFloat and DecFP (at least) on master
-
-@static if VERSION >= v"0.7.0-DEV.4804"
-# adapted from Matlab File Exchange roundsd: http://www.mathworks.com/matlabcentral/fileexchange/26212
-# for round, og is the power of 10 relative to the decimal point
-# for signif, og is the absolute power of 10
-# digits and base must be integers, x must be convertable to float
-
-function signif(x::Real, digits::Integer, base::Integer=10)
-    digits < 1 && throw(DomainError())
-
-    x = float(x)
-    (x == 0 || !isfinite(x)) && return x
-    if base == 10
-        e = floor(log10(abs(x)) - digits + 1.)
-        og = oftype(x, exp10(abs(e)))
-    elseif base == 2
-        e = exponent(abs(x)) - digits + 1.
-        og = oftype(x, exp2(abs(e)))
-    else
-        e = floor(log(base, abs(x)) - digits + 1.)
-        og = oftype(x, float(base) ^ abs(e))
-    end
-    # for numeric stability
-    r = e >= 0 ? round(x/og)*og : round(x*og)/og
-    isfinite(r) ? r : x
-end
-end
-
 function _pfmt_e(out::IO, fs::FormatSpec, x::AbstractFloat)
     # extract sign, significand, and exponent
     ax = abs(x)
@@ -241,7 +214,7 @@ function _pfmt_e(out::IO, fs::FormatSpec, x::AbstractFloat)
         e = 0
         u = zero(x)
     else
-        rax = signif(ax, fs.prec + 1) # round(ax; sigdigits = fs.prec + 1)
+        rax = Compat.round(ax, sigdigits = fs.prec + 1)
         e = floor(Integer, log10(rax))  # exponent
         u = rax * exp10(-e)  # significand
     end
