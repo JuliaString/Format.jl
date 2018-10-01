@@ -15,12 +15,12 @@ This package offers Python-style general formatting and c-style numerical format
 
 [travis-url]:   https://travis-ci.org/JuliaString/Format.jl
 [travis-s-img]: https://travis-ci.org/JuliaString/Format.jl.svg
-[travis-m-img]: https://travis-ci.org/JuliaString/Format.jl.svg?branch=newmaster
+[travis-m-img]: https://travis-ci.org/JuliaString/Format.jl.svg?branch=master
 
 [app-s-url]:    https://ci.appveyor.com/project/ScottPJones/format-jl
-[app-m-url]:    https://ci.appveyor.com/project/ScottPJones/format-jl/branch/newmaster
+[app-m-url]:    https://ci.appveyor.com/project/ScottPJones/format-jl/branch/master
 [app-s-img]:    https://ci.appveyor.com/api/projects/status/9wb580eyjv4k3iej?svg=true
-[app-m-img]:    https://ci.appveyor.com/api/projects/status/9wb580eyjv4k3iej/branch/newmaster?svg=true
+[app-m-img]:    https://ci.appveyor.com/api/projects/status/9wb580eyjv4k3iej/branch/master?svg=true
 
 [pkg-s-url]:    http://pkg.julialang.org/?pkg=Format
 [pkg-m-url]:    http://pkg.julialang.org/?pkg=Format
@@ -28,17 +28,17 @@ This package offers Python-style general formatting and c-style numerical format
 [pkg-m-img]:    http://pkg.julialang.org/badges/Format_0.7.svg
 
 [codecov-url]:  https://codecov.io/gh/JuliaString/Format.jl
-[codecov-img]:  https://codecov.io/gh/JuliaString/Format.jl/branch/newmaster/graph/badge.svg
+[codecov-img]:  https://codecov.io/gh/JuliaString/Format.jl/branch/master/graph/badge.svg
 
 [coverall-s-url]: https://coveralls.io/github/JuliaString/Format.jl
-[coverall-m-url]: https://coveralls.io/github/JuliaString/Format.jl?branch=newmaster
+[coverall-m-url]: https://coveralls.io/github/JuliaString/Format.jl?branch=master
 [coverall-s-img]: https://coveralls.io/repos/github/JuliaString/Format.jl/badge.svg
-[coverall-m-img]: https://coveralls.io/repos/github/JuliaString/Format.jl/badge.svg?branch=newmaster
+[coverall-m-img]: https://coveralls.io/repos/github/JuliaString/Format.jl/badge.svg?branch=master
 
 ## Getting Started
 
 This package is pure Julia.  It is now registered, so it can be added simply with `Pkg.add("Format")`.
-Note: The default branch is `newmaster` instead of `master`, remember that if you wish to make a PR on this package. (It is forked off of [Formatting.jl](https://github.com/JuliaIO/Formatting.jl), and I try to keep the master branch up to date with that, and cherry pick or port all necessary changes to `Format`).
+It is forked off of [Formatting.jl](https://github.com/JuliaIO/Formatting.jl), and I try to keep the oldmaster branch up to date with the master branch of that, and cherry pick or port all necessary changes to `Format`).
 
 To start using the package, you can simply write
 
