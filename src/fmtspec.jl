@@ -176,7 +176,7 @@ function printfmt(io::IO, fs::FormatSpec, x)
         ty == 'o' ? _pfmt_i(io, fs, ix, _Oct()) :
         _pfmt_i(io, fs, ix, _Bin())
     elseif cls == 'f'
-        fx = float(x)
+        fx = parse(Float64, x)
         if isfinite(fx)
             ty == 'f' || ty == 'F' ? _pfmt_f(io, fs, fx) :
             ty == 'e' || ty == 'E' ? _pfmt_e(io, fs, fx) :
