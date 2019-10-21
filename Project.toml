@@ -23,11 +23,17 @@ keywords = ["Strings", "Formatting"]
 license = "MIT"
 name = "Format"
 uuid = "1fa38f19-a742-5d3f-a2b9-30dd87b9d5f8"
-version = "1.0.0"
+version = "1.0.1"
 
 [deps]
-Compat  = "34da2185-b29b-5c13-b0c7-acf172513d20"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+Random  = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+
+[targets]
+test = ["Test", "Random"]
 
 [compat]
 julia = "^1.0.0"
-Compat = "≥ 1.0.1"

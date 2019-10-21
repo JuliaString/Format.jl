@@ -3,17 +3,13 @@ __precompile__(true)
 module Format
 
 import Base.show
-using Compat
-using Compat.Printf
-const V6_COMPAT = VERSION < v"0.7.0-DEV"
 
-_stdout() = @static V6_COMPAT ? STDOUT : stdout
-_codeunits(s) = Vector{UInt8}(@static V6_COMPAT ? s : codeunits(s))
-@static if V6_COMPAT
-    const m_eval = eval
-else
-    m_eval(expr) = Core.eval(@__MODULE__, expr)
-end
+using Printf
+const PF = @static VERSION >= v"1.4.0-DEV.180" ? Printf : Base.Printf
+
+_stdout() = stdout
+_codeunits(s) = Vector{UInt8}(codeunits(s))
+m_eval(expr) = Core.eval(@__MODULE__, expr)
 
 export FormatSpec, FormatExpr, printfmt, printfmtln, format, generate_formatter
 export pyfmt, cfmt, fmt

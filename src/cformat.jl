@@ -3,7 +3,7 @@ formatters = Dict{ ASCIIStr, Function }()
 cfmt( fmt::ASCIIStr, x ) = m_eval(Expr(:call, generate_formatter( fmt ), x))
 
 function checkfmt(fmt)
-    test = Base.Printf.parse( fmt )
+    test = PF.parse( fmt )
     (length( test ) == 1 && typeof( test[1] ) <: Tuple) ||
         error( "Only one AND undecorated format string is allowed")
 end
@@ -38,7 +38,7 @@ function generate_formatter( fmt::ASCIIStr )
 end
 
 function addcommasreal(s)
-    dpos = Compat.findfirst( isequal('.'), s )
+    dpos = findfirst( isequal('.'), s )
     dpos !== nothing && return string(addcommas( s[1:dpos-1] ), s[ dpos:end ])
     # find the rightmost digit
     for i in length( s ):-1:1
@@ -49,7 +49,7 @@ end
 
 function addcommasrat(s)
     # commas are added to only the numerator
-    spos = Compat.findfirst( isequal('/'), s )
+    spos = findfirst( isequal('/'), s )
     string(addcommas( s[1:spos-1] ), s[spos:end])
 end
 
@@ -254,10 +254,10 @@ function format( x::T;
             checkwidth = true
         end
     elseif stripzeros && in( actualconv[1], "fFeEs" )
-        dpos = Compat.findfirst( isequal('.'), s )
+        dpos = findfirst( isequal('.'), s )
         dpos === nothing && (dpos = length(s))
         if actualconv[1] in "eEs"
-            epos = Compat.findfirst(isequal(actualconv[1] == 'E' ? 'E' : 'e'), s)
+            epos = findfirst(isequal(actualconv[1] == 'E' ? 'E' : 'e'), s)
             rpos = (epos === nothing) ? length( s ) : (epos-1)
         else
             rpos = length(s)
