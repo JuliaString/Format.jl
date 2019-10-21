@@ -1,7 +1,7 @@
 using Format
-using Compat.Test
-using Compat.Printf
-using Compat.Random
+using Test
+using Printf
+using Random
 
 @testset "cformat"    begin include( "cformat.jl" ) end
 @testset "fmtspec"    begin include( "fmtspec.jl" ) end
