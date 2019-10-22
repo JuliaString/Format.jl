@@ -15,7 +15,8 @@ function generate_formatter( fmt::ASCIIStr )
 
     if !occursin("'", fmt)
         checkfmt(fmt)
-        return (formatters[ fmt ] = @eval(x->@sprintf( $fmt, x )))
+        formatter = @eval(x->@sprintf( $fmt, x ))
+        return (formatters[ fmt ] = x->Base.invokelatest(formatter, x))
     end
 
     conversion = fmt[end]
@@ -24,60 +25,65 @@ function generate_formatter( fmt::ASCIIStr )
 
     fmtactual = replace( fmt, "'" => ""; count=1 )
     checkfmt( fmtactual )
-    conversion in "sfF" ||
-        return (formatters[ fmt ] = @eval(x->checkcommas(@sprintf( $fmtactual, x ))))
-
-    formatters[ fmt ] =
-        if endswith( fmtactual, 's')
+    formatter =
+        if !(conversion in "sfF")
+            @eval(x->checkcommas(@sprintf( $fmtactual, x )))
+        elseif endswith( fmtactual, 's')
             @eval((x::Real)->((eltype(x) <: Rational)
                               ? addcommasrat(@sprintf( $fmtactual, x ))
                               : addcommasreal(@sprintf( $fmtactual, x ))))
         else
             @eval((x::Real)->addcommasreal(@sprintf( $fmtactual, x )))
         end
+    return (formatters[ fmt ] = x->Base.invokelatest(formatter, x))
 end
 
 function addcommasreal(s)
+    len = length(s)
     dpos = findfirst( isequal('.'), s )
-    dpos !== nothing && return string(addcommas( s[1:dpos-1] ), s[ dpos:end ])
+    dpos !== nothing && return addcommas(s, len, dpos-1)
     # find the rightmost digit
-    for i in length( s ):-1:1
-        isdigit( s[i] ) && return string(addcommas( s[1:i] ), s[i+1:end])
+    for i in len:-1:1
+        isdigit( s[i] ) && return addcommas(s, len, i)
     end
     s
 end
 
-function addcommasrat(s)
-    # commas are added to only the numerator
-    spos = findfirst( isequal('/'), s )
-    string(addcommas( s[1:spos-1] ), s[spos:end])
-end
+# commas are added to only the numerator
+addcommasrat(s) = addcommas(s, length(s), findfirst( isequal('/'), s )-1)
 
 function checkcommas(s)
-    for i in length( s ):-1:1
-        if isdigit( s[i] )
-            s = string(addcommas( s[1:i] ), s[i+1:end])
-            break
-        end
+    len = length(s)
+    for i in len:-1:1
+        isdigit( s[i] ) && return addcommas(s, len, i)
     end
     s
 end
 
-function addcommas( s::ASCIIStr )
-    len = length(s)
-    t = ""
-    for i in 1:3:len
-        subs = s[max(1,len-i-1):len-i+1]
-        if i == 1
-            t = subs
-        elseif match( r"[0-9]", subs ) != nothing
-            t = string(subs, ',', t)
-        else
-            t = string(subs, t)
-        end
+function addcommas(s::T, len, lst) where {T<:AbstractString}
+    lst < 4 && return s
+    beg = 1
+    while beg < len
+        isdigit(s[beg]) && break
+        beg += 1
     end
-    t
+    dig = lst - beg + 1
+    dig < 4 && return s
+
+    commas = div(dig - 1, 3)
+    sv = Base.StringVector(len + commas)
+
+    for i = 1:beg-1; sv[i] = s[i]; end
+    cnt = dig - commas*3
+    pos = beg - 1
+    for i = beg:lst-3
+        sv[pos += 1] = s[i]
+        (cnt -= 1) == 0 && (cnt = 3; sv[pos += 1] = ',')
+    end
+    for i = lst-2:len; sv[i+commas] = s[i]; end
+    T(sv)
 end
+addcommas(s) = (l = length(s); addcommas(s, l, l))
 
 function generate_format_string(;
                                 width::Int=-1,
