@@ -165,6 +165,9 @@ _srepr(x) = repr(x)
 _srepr(x::AbstractString) = x
 _srepr(x::AbstractChar) = string(x)
 _srepr(x::Enum) = string(x)
+@static if VERSION < v"1.2.0-DEV"
+    _srepr(x::Irrational{sym}) where {sym} = string(sym)
+end
 
 function printfmt(io::IO, fs::FormatSpec, x)
     cls = fs.cls
