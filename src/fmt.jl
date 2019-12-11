@@ -29,7 +29,7 @@ default_spec!(::Type{T}, ::Type{K}) where {T,K} =
     (DEFAULT_FORMATTERS[T] = DEFAULT_FORMATTERS[K]; nothing)
 
 # seed it with some basic default formatters
-for (t, c) in [(Integer,'d'), (AbstractFloat,'f'), (AbstractChar,'c'), (AbstractString,'s')]
+for (t, c) in [(Integer,'d'), (AbstractFloat,'f'), (AbstractChar,'c'), (AbstractString,'s'), (AbstractIrrational,'v')]
     default_spec!(t, c)
 end
 
@@ -66,6 +66,7 @@ default_spec(::Type{<:Integer})        = DEFAULT_FORMATTERS[Integer]
 default_spec(::Type{<:AbstractFloat})  = DEFAULT_FORMATTERS[AbstractFloat]
 default_spec(::Type{<:AbstractString}) = DEFAULT_FORMATTERS[AbstractString]
 default_spec(::Type{<:AbstractChar})   = DEFAULT_FORMATTERS[AbstractChar]
+default_spec(::Type{<:AbstractIrrational})   = DEFAULT_FORMATTERS[AbstractIrrational]
 
 default_spec(::Type{T}) where {T} =
     get(DEFAULT_FORMATTERS, T) do
@@ -176,7 +177,7 @@ function fmt end
 # TODO: do more caching to optimize repeated calls
 
 # creates a new FormatSpec by overriding the defaults and passes it to pyfmt
-# note: adding kwargs is only appropriate for one-off formatting.  
+# note: adding kwargs is only appropriate for one-off formatting.
 #       normally it will be much faster to change the fmt_default formatting as needed
 function fmt(x; kwargs...)
     fspec = fmt_default(x)
