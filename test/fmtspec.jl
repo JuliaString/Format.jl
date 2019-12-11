@@ -234,3 +234,9 @@ end
     @test pyfmt("*>5f", Inf) == "**Inf"
     @test pyfmt("⋆>5f", Inf) == "⋆⋆Inf"
 end
+
+@testset "Format variable (v) for Irrationals" begin
+    @test pyfmt("10v", pi) == "         π"
+    @test pyfmt("3v", MathConstants.eulergamma) == "  γ"
+    @test pyfmt("<3v", MathConstants.e) == "ℯ  "
+end
