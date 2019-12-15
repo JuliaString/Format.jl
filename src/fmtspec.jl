@@ -173,14 +173,22 @@ function printfmt(io::IO, fs::FormatSpec, x)
     cls = fs.cls
     ty = fs.typ
     if cls == 'i'
-        ix = Integer(x)
+        ix = x
+        try
+            ix = Integer(x)
+        catch
+        end
         ty == 'd' || ty == 'n' ? _pfmt_i(io, fs, ix, _Dec()) :
         ty == 'x' ? _pfmt_i(io, fs, ix, _Hex()) :
         ty == 'X' ? _pfmt_i(io, fs, ix, _HEX()) :
         ty == 'o' ? _pfmt_i(io, fs, ix, _Oct()) :
         _pfmt_i(io, fs, ix, _Bin())
     elseif cls == 'f'
-        fx = float(x)
+        fx = x
+        try
+            fx = float(x)
+        catch
+        end
         if isfinite(fx)
             ty == 'f' || ty == 'F' ? _pfmt_f(io, fs, fx) :
             ty == 'e' || ty == 'E' ? _pfmt_e(io, fs, fx) :

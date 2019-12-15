@@ -29,7 +29,7 @@ default_spec!(::Type{T}, ::Type{K}) where {T,K} =
     (DEFAULT_FORMATTERS[T] = DEFAULT_FORMATTERS[K]; nothing)
 
 # seed it with some basic default formatters
-for (t, c) in [(Integer,'d'), (AbstractFloat,'f'), (AbstractChar,'c'), (AbstractString,'s'), (AbstractIrrational,'v')]
+for (t, c) in [(Integer,'d'), (AbstractFloat,'f'), (AbstractChar,'c'), (AbstractString,'s'), (Number, 'v')]
     default_spec!(t, c)
 end
 
@@ -67,6 +67,7 @@ default_spec(::Type{<:AbstractFloat})  = DEFAULT_FORMATTERS[AbstractFloat]
 default_spec(::Type{<:AbstractString}) = DEFAULT_FORMATTERS[AbstractString]
 default_spec(::Type{<:AbstractChar})   = DEFAULT_FORMATTERS[AbstractChar]
 default_spec(::Type{<:AbstractIrrational})   = DEFAULT_FORMATTERS[AbstractIrrational]
+default_spec(::Type{<:Number})   = DEFAULT_FORMATTERS[Number]
 
 default_spec(::Type{T}) where {T} =
     get(DEFAULT_FORMATTERS, T) do

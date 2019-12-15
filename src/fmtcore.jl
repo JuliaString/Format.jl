@@ -262,3 +262,40 @@ function _pfmt_specialf(out::IO, fs::FormatSpec, x::AbstractFloat)
     end
 end
 
+function _pfmt_Number_f(out::IO, fs::FormatSpec, x::Number, _pf::Function)
+    fsi = FormatSpec(fs, width = -1)
+    f = x::AbstractFloat->begin
+        io = IOBuffer()
+        _pf(io, fsi, x)
+        String(take!(io))
+    end
+    s = _fmt_Number(x, f)
+    _pfmt_s(out, fs, s)
+end
+
+function _pfmt_Number_i(out::IO, fs::FormatSpec, x::Number, op::Op, _pf::Function) where {Op}
+    fsi = FormatSpec(fs, width = -1)
+    f = x::Integer->begin
+        io = IOBuffer()
+        _pf(io, fsi, x, op)
+        String(take!(io))
+    end
+    s = _fmt_Number(x, f)
+    _pfmt_s(out, fs, s)
+end
+
+function _pfmt_i(out::IO, fs::FormatSpec, x::Number, op::Op) where {Op}
+    _pfmt_Number_i(out, fs, x, op, _pfmt_i)
+end
+
+function _pfmt_f(out::IO, fs::FormatSpec, x::Number)
+    _pfmt_Number_f(out, fs, x, _pfmt_f)
+end
+
+function _pfmt_e(out::IO, fs::FormatSpec, x::Number)
+    _pfmt_Number_f(out, fs, x, _pfmt_e)
+end
+
+function _fmt_Number(x::Complex, f::Function)
+    s = f(real(x)) * (imag(x) >= 0 ? " + " : " - ") * f(abs(imag(x))) * "im"
+end
