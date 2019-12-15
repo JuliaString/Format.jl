@@ -1,4 +1,5 @@
 # core formatting functions
+export fmt_Number
 
 ### auxiliary functions
 
@@ -269,7 +270,7 @@ function _pfmt_Number_f(out::IO, fs::FormatSpec, x::Number, _pf::Function)
         _pf(io, fsi, x)
         String(take!(io))
     end
-    s = _fmt_Number(x, f)
+    s = fmt_Number(x, f)
     _pfmt_s(out, fs, s)
 end
 
@@ -280,7 +281,7 @@ function _pfmt_Number_i(out::IO, fs::FormatSpec, x::Number, op::Op, _pf::Functio
         _pf(io, fsi, x, op)
         String(take!(io))
     end
-    s = _fmt_Number(x, f)
+    s = fmt_Number(x, f)
     _pfmt_s(out, fs, s)
 end
 
@@ -296,6 +297,6 @@ function _pfmt_e(out::IO, fs::FormatSpec, x::Number)
     _pfmt_Number_f(out, fs, x, _pfmt_e)
 end
 
-function _fmt_Number(x::Complex, f::Function)
+function fmt_Number(x::Complex, f::Function)
     s = f(real(x)) * (imag(x) >= 0 ? " + " : " - ") * f(abs(imag(x))) * "im"
 end

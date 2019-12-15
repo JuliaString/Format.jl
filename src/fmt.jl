@@ -18,7 +18,7 @@ mutable struct DefaultSpec
     DefaultSpec(c::AbstractChar) = new(Char(c), FormatSpec(c))
 end
 
-const DEFAULT_FORMATTERS = Dict{DataType, DefaultSpec}()
+const DEFAULT_FORMATTERS = Dict{Union{DataType, UnionAll}, DefaultSpec}()
 
 # adds a new default formatter for this type
 default_spec!(::Type{T}, c::AbstractChar) where {T} =
@@ -29,7 +29,10 @@ default_spec!(::Type{T}, ::Type{K}) where {T,K} =
     (DEFAULT_FORMATTERS[T] = DEFAULT_FORMATTERS[K]; nothing)
 
 # seed it with some basic default formatters
-for (t, c) in [(Integer,'d'), (AbstractFloat,'f'), (AbstractChar,'c'), (AbstractString,'s'), (Number, 'v')]
+ComplexInteger = Complex{T} where T<:Integer
+ComplexFloat = Complex{T} where T<:AbstractFloat
+for (t, c) in [(Integer,'d'), (AbstractFloat,'f'), (AbstractChar,'c'), (AbstractString,'s'),
+    (ComplexInteger, 'd'), (ComplexFloat, 'f'), (Number,'s'), (AbstractIrrational,'s')]
     default_spec!(t, c)
 end
 
@@ -66,8 +69,10 @@ default_spec(::Type{<:Integer})        = DEFAULT_FORMATTERS[Integer]
 default_spec(::Type{<:AbstractFloat})  = DEFAULT_FORMATTERS[AbstractFloat]
 default_spec(::Type{<:AbstractString}) = DEFAULT_FORMATTERS[AbstractString]
 default_spec(::Type{<:AbstractChar})   = DEFAULT_FORMATTERS[AbstractChar]
-default_spec(::Type{<:AbstractIrrational})   = DEFAULT_FORMATTERS[AbstractIrrational]
-default_spec(::Type{<:Number})   = DEFAULT_FORMATTERS[Number]
+default_spec(::Type{<:AbstractIrrational}) = DEFAULT_FORMATTERS[AbstractIrrational]
+default_spec(::Type{<:Number})         = DEFAULT_FORMATTERS[Number]
+default_spec(::ComplexInteger)     = DEFAULT_FORMATTERS[ComplexInteger]
+default_spec(::ComplexFloat)  = DEFAULT_FORMATTERS[ComplexFloat]
 
 default_spec(::Type{T}) where {T} =
     get(DEFAULT_FORMATTERS, T) do
@@ -202,3 +207,6 @@ function fmt(x, syms::Symbol...; kwargs...)
     d = _add_kwargs_from_symbols(kwargs, syms...)
     fmt(x; d...)
 end
+
+fmt_default!(AbstractIrrational, 's', :right)
+fmt_default!(Number, 's', :right)
