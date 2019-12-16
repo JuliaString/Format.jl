@@ -20,8 +20,10 @@ i = 1234567
 @test fmt(i) == "1234567"
 @test fmt(i,:commas) == "1,234,567"
 
-@test_throws ErrorException fmt_default(Real)
-@test_throws ErrorException fmt_default(Complex)
+fmt(3//4, 10) == "      3//4"
+fmt(2 - 3im, 10) == "   2 - 3im"
+fmt(pi - 3im, 15, 2) == "  3.14 - 3.00im"
+fmt(1//2 + 6//2 * im, 15) == " 1//2 + 3//1*im"
 
 fmt_default!(Int, :commas, width = 12)
 @test fmt(i) == "   1,234,567"
