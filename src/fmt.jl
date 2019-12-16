@@ -31,8 +31,10 @@ default_spec!(::Type{T}, ::Type{K}) where {T,K} =
 # seed it with some basic default formatters
 ComplexInteger = Complex{T} where T<:Integer
 ComplexFloat = Complex{T} where T<:AbstractFloat
+ComplexRational = Complex{T} where T<:Rational
 for (t, c) in [(Integer,'d'), (AbstractFloat,'f'), (AbstractChar,'c'), (AbstractString,'s'),
-    (ComplexInteger, 'd'), (ComplexFloat, 'f'), (Number,'S'), (AbstractIrrational,'S')]
+    (ComplexInteger,'d'), (ComplexFloat,'f'), (Number,'S'), (AbstractIrrational,'S'),
+    (Rational,'S'), (ComplexRational,'S')]
     default_spec!(t, c)
 end
 
@@ -73,6 +75,8 @@ default_spec(::Type{<:AbstractIrrational}) = DEFAULT_FORMATTERS[AbstractIrration
 default_spec(::Type{<:Number})             = DEFAULT_FORMATTERS[Number]
 default_spec(::ComplexInteger)             = DEFAULT_FORMATTERS[ComplexInteger]
 default_spec(::ComplexFloat)               = DEFAULT_FORMATTERS[ComplexFloat]
+default_spec(::Rational)                   = DEFAULT_FORMATTERS[Rational]
+default_spec(::ComplexRational)            = DEFAULT_FORMATTERS[ComplexRational]
 
 default_spec(::Type{T}) where {T} =
     get(DEFAULT_FORMATTERS, T) do

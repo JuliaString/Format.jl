@@ -241,3 +241,9 @@ end
     @test pyfmt("10.2f", MathConstants.eulergamma) == "      0.58"
     @test pyfmt("<3S", MathConstants.e) == "ℯ  "
 end
+
+@testset "Format Symbols (S) for Irrationals" begin
+    pyfmt("10s", 3//4) == "3//4      "
+    pyfmt("10S", 3//4) == "      3//4"
+    pyfmt("10.1f", 3//4) == "       0.8"
+end

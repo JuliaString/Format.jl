@@ -20,10 +20,19 @@ i = 1234567
 @test fmt(i) == "1234567"
 @test fmt(i,:commas) == "1,234,567"
 
-fmt(3//4, 10) == "      3//4"
-fmt(2 - 3im, 10) == "   2 - 3im"
-fmt(pi - 3im, 15, 2) == "  3.14 - 3.00im"
-fmt(1//2 + 6//2 * im, 15) == " 1//2 + 3//1*im"
+@test fmt(2 - 3im, 10) == "   2 - 3im"
+@test fmt(pi - 3im, 15, 2) == "  3.14 - 3.00im"
+
+@test fmt(3//4, 10) == "      3//4"
+@test fmt(1//2 + 6//2 * im, 15) == " 1//2 + 3//1*im"
+
+fmt_default!(Rational, 'f', prec = 2)
+fmt_default!(Format.ComplexRational, 'f', prec = 2)
+
+@test fmt(3//4, 10, 2) == "      0.75"
+@test fmt(3//4, 10, 1) == "       0.8"
+@test fmt(1//2 + 6//2 * im, 23) == "  0.500000 + 3.000000im"
+@test fmt(1//2 + 6//2 * im, 15, 2) == "  0.50 + 3.00im"
 
 fmt_default!(Int, :commas, width = 12)
 @test fmt(i) == "   1,234,567"
@@ -49,4 +58,3 @@ v = pi
 
 v = MathConstants.eulergamma
 @test fmt(v, 10, 2) == "         γ"
-@test pyfmt("10.2f", v) == "      0.58"
