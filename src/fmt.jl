@@ -32,7 +32,7 @@ default_spec!(::Type{T}, ::Type{K}) where {T,K} =
 ComplexInteger = Complex{T} where T<:Integer
 ComplexFloat = Complex{T} where T<:AbstractFloat
 for (t, c) in [(Integer,'d'), (AbstractFloat,'f'), (AbstractChar,'c'), (AbstractString,'s'),
-    (ComplexInteger, 'd'), (ComplexFloat, 'f'), (Number,'s'), (AbstractIrrational,'s')]
+    (ComplexInteger, 'd'), (ComplexFloat, 'f'), (Number,'S'), (AbstractIrrational,'S')]
     default_spec!(t, c)
 end
 
@@ -65,14 +65,14 @@ end
 # methods to get the current default objects
 # note: if you want to set a default for an abstract type (i.e. AbstractFloat)
 # you'll need to extend this method like here:
-default_spec(::Type{<:Integer})        = DEFAULT_FORMATTERS[Integer]
-default_spec(::Type{<:AbstractFloat})  = DEFAULT_FORMATTERS[AbstractFloat]
-default_spec(::Type{<:AbstractString}) = DEFAULT_FORMATTERS[AbstractString]
-default_spec(::Type{<:AbstractChar})   = DEFAULT_FORMATTERS[AbstractChar]
+default_spec(::Type{<:Integer})            = DEFAULT_FORMATTERS[Integer]
+default_spec(::Type{<:AbstractFloat})      = DEFAULT_FORMATTERS[AbstractFloat]
+default_spec(::Type{<:AbstractString})     = DEFAULT_FORMATTERS[AbstractString]
+default_spec(::Type{<:AbstractChar})       = DEFAULT_FORMATTERS[AbstractChar]
 default_spec(::Type{<:AbstractIrrational}) = DEFAULT_FORMATTERS[AbstractIrrational]
-default_spec(::Type{<:Number})         = DEFAULT_FORMATTERS[Number]
-default_spec(::ComplexInteger)     = DEFAULT_FORMATTERS[ComplexInteger]
-default_spec(::ComplexFloat)  = DEFAULT_FORMATTERS[ComplexFloat]
+default_spec(::Type{<:Number})             = DEFAULT_FORMATTERS[Number]
+default_spec(::ComplexInteger)             = DEFAULT_FORMATTERS[ComplexInteger]
+default_spec(::ComplexFloat)               = DEFAULT_FORMATTERS[ComplexFloat]
 
 default_spec(::Type{T}) where {T} =
     get(DEFAULT_FORMATTERS, T) do
@@ -208,5 +208,5 @@ function fmt(x, syms::Symbol...; kwargs...)
     fmt(x; d...)
 end
 
-fmt_default!(AbstractIrrational, 's', :right)
-fmt_default!(Number, 's', :right)
+#fmt_default!(AbstractIrrational, 's', :right)
+#fmt_default!(Number, 's', :right)

@@ -44,6 +44,9 @@ fmt_default!(UInt32, UInt16, width=20)
 @test fmt(0xfffff) == "           1,048,575"
 
 v = pi
-
 @test fmt(v) == "π"
 @test fmt(v; width=10) == "         π"
+
+v = MathConstants.eulergamma
+@test fmt(v, 10, 2) == "         γ"
+@test pyfmt("10.2f", v) == "      0.58"
