@@ -234,3 +234,17 @@ end
     @test pyfmt("*>5f", Inf) == "**Inf"
     @test pyfmt("⋆>5f", Inf) == "⋆⋆Inf"
 end
+
+@testset "Format Symbols (S) for Irrationals" begin
+    @test pyfmt(">10s", pi) == "         π"
+    @test pyfmt("10s", pi) == "π         "
+    @test pyfmt("3", MathConstants.eulergamma) == "  γ"
+    @test pyfmt("10.2f", MathConstants.eulergamma) == "      0.58"
+    @test pyfmt("<3s", MathConstants.e) == "ℯ  "
+end
+
+@testset "Format Symbols (S) for Irrationals" begin
+    pyfmt("10s", 3//4) == "3//4      "
+    pyfmt("10", 3//4) == "      3//4"
+    pyfmt("10.1f", 3//4) == "       0.8"
+end
