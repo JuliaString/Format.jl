@@ -265,9 +265,10 @@ end
 
 function _pfmt_Number_f(out::IO, fs::FormatSpec, x::Number, _pf::Function)
     fsi = FormatSpec(fs, width = -1)
-    f = x::AbstractFloat->begin
+    f = x->begin
+        fx = AbstractFloat(x) # not float(x), this should error out, if conversion is not possible
         io = IOBuffer()
-        _pf(io, fsi, x)
+        _pf(io, fsi, fx)
         String(take!(io))
     end
     s = fmt_Number(x, f)
@@ -276,9 +277,10 @@ end
 
 function _pfmt_Number_i(out::IO, fs::FormatSpec, x::Number, op::Op, _pf::Function) where {Op}
     fsi = FormatSpec(fs, width = -1)
-    f = x::Integer->begin
+    f = x->begin
+        ix = Integer(x)
         io = IOBuffer()
-        _pf(io, fsi, x, op)
+        _pf(io, fsi, ix, op)
         String(take!(io))
     end
     s = fmt_Number(x, f)
