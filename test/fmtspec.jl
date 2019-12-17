@@ -238,7 +238,7 @@ end
 @testset "Format Symbols (S) for Irrationals" begin
     @test pyfmt(">10s", pi) == "         π"
     @test pyfmt("10s", pi) == "π         "
-    @test pyfmt("3", MathConstants.eulergamma) == "  γ"
+    @test pyfmt("3", MathConstants.eulergamma) == "γ  "
     @test pyfmt("10.2f", MathConstants.eulergamma) == "      0.58"
     @test pyfmt("<3s", MathConstants.e) == "ℯ  "
 end
