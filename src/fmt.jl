@@ -14,8 +14,19 @@
 
 mutable struct DefaultSpec
     typechar::Char
+    kwargs::Any
     fspec::FormatSpec
-    DefaultSpec(c::AbstractChar) = new(Char(c), FormatSpec(c))
+end
+
+DefaultSpec(c::AbstractChar) = DefaultSpec(Char(c), (), FormatSpec(c))
+function DefaultSpec(c::AbstractChar, syms...; kwargs...)
+    # otherwise update the spec
+    if isempty(syms)
+        DefaultSpec(Char(c), kwargs, FormatSpec(c; kwargs...))
+    else
+        kw = _add_kwargs_from_symbols(kwargs, syms...)
+        DefaultSpec(Char(c), tuple(kw...), FormatSpec(c; kw...))
+    end
 end
 
 const DEFAULT_FORMATTERS = Dict{DataType, DefaultSpec}()
@@ -28,16 +39,16 @@ default_spec!(::Type{T}, c::AbstractChar) where {T} =
 default_spec!(::Type{T}, ::Type{K}) where {T,K} =
     (DEFAULT_FORMATTERS[T] = DEFAULT_FORMATTERS[K]; nothing)
 
-# seed it with some basic default formatters
-for (t, c) in [(Integer,'d'), (AbstractFloat,'f'), (AbstractChar,'c'), (AbstractString,'s')]
-    default_spec!(t, c)
+default_spec!(::Type{T}, c::AbstractChar, syms...; kwargs...) where {T} =
+    (DEFAULT_FORMATTERS[T] = DefaultSpec(c, syms...; kwargs...); nothing)
+
+function reset!(::Type{T}) where {T}
+    dspec = default_spec(T)
+    dspec.fspec = FormatSpec(dspec.typechar; dspec.kwargs...)
+    nothing
 end
 
-reset!(::Type{T}) where {T} =
-    (dspec = default_spec(T); dspec.fspec = FormatSpec(dspec.typechar); nothing)
-
 # --------------------------------------------------------------------------------------------------
-
 
 function _add_kwargs_from_symbols(kwargs, syms::Symbol...)
     d = Dict{Symbol, Any}(kwargs)
@@ -66,6 +77,8 @@ default_spec(::Type{<:Integer})        = DEFAULT_FORMATTERS[Integer]
 default_spec(::Type{<:AbstractFloat})  = DEFAULT_FORMATTERS[AbstractFloat]
 default_spec(::Type{<:AbstractString}) = DEFAULT_FORMATTERS[AbstractString]
 default_spec(::Type{<:AbstractChar})   = DEFAULT_FORMATTERS[AbstractChar]
+default_spec(::Type{<:AbstractIrrational}) = DEFAULT_FORMATTERS[AbstractIrrational]
+default_spec(::Type{<:Number})         = DEFAULT_FORMATTERS[Number]
 
 default_spec(::Type{T}) where {T} =
     get(DEFAULT_FORMATTERS, T) do
@@ -200,3 +213,16 @@ function fmt(x, syms::Symbol...; kwargs...)
     d = _add_kwargs_from_symbols(kwargs, syms...)
     fmt(x; d...)
 end
+
+# --------------------------------------------------------------------------------------------------
+
+# seed it with some basic default formatters
+for (t, c) in [(Integer,'d'),
+               (AbstractFloat,'f'),
+               (AbstractChar,'c'),
+               (AbstractString,'s')]
+    default_spec!(t, c)
+end
+
+default_spec!(Number, 's', :right)
+default_spec!(AbstractIrrational, 's', :right)
