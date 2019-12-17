@@ -29,7 +29,7 @@ function DefaultSpec(c::AbstractChar, syms...; kwargs...)
     end
 end
 
-const DEFAULT_FORMATTERS = Dict{Type{T} where T, DefaultSpec}()
+const DEFAULT_FORMATTERS = Dict{Type{<:Any}, DefaultSpec}()
 
 # adds a new default formatter for this type
 default_spec!(::Type{T}, c::AbstractChar) where {T} =
@@ -83,6 +83,7 @@ default_spec(::Type{<:AbstractFloat})  = DEFAULT_FORMATTERS[AbstractFloat]
 default_spec(::Type{<:AbstractString}) = DEFAULT_FORMATTERS[AbstractString]
 default_spec(::Type{<:AbstractChar})   = DEFAULT_FORMATTERS[AbstractChar]
 default_spec(::Type{<:AbstractIrrational}) = DEFAULT_FORMATTERS[AbstractIrrational]
+default_spec(::Type{<:Rational})       = DEFAULT_FORMATTERS[Rational]
 default_spec(::Type{<:Number})         = DEFAULT_FORMATTERS[Number]
 default_spec(::ComplexInteger)         = DEFAULT_FORMATTERS[ComplexInteger]
 default_spec(::ComplexFloat)           = DEFAULT_FORMATTERS[ComplexFloat]
