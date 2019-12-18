@@ -172,28 +172,34 @@ function printfmt(io::IO, fs::FormatSpec, x)
     cls = fs.cls
     ty = fs.typ
     if cls == 'i'
-        ix = x
         try
             ix = Integer(x)
+            ty == 'd' || ty == 'n' ? _pfmt_i(io, fs, ix, _Dec()) :
+            ty == 'x' ? _pfmt_i(io, fs, ix, _Hex()) :
+            ty == 'X' ? _pfmt_i(io, fs, ix, _HEX()) :
+            ty == 'o' ? _pfmt_i(io, fs, ix, _Oct()) :
+            _pfmt_i(io, fs, ix, _Bin())
         catch
+            ty == 'd' || ty == 'n' ? _pfmt_i(io, fs, x, _Dec()) :
+            ty == 'x' ? _pfmt_i(io, fs, x, _Hex()) :
+            ty == 'X' ? _pfmt_i(io, fs, x, _HEX()) :
+            ty == 'o' ? _pfmt_i(io, fs, x, _Oct()) :
+            _pfmt_i(io, fs, x, _Bin())
         end
-        ty == 'd' || ty == 'n' ? _pfmt_i(io, fs, ix, _Dec()) :
-        ty == 'x' ? _pfmt_i(io, fs, ix, _Hex()) :
-        ty == 'X' ? _pfmt_i(io, fs, ix, _HEX()) :
-        ty == 'o' ? _pfmt_i(io, fs, ix, _Oct()) :
-        _pfmt_i(io, fs, ix, _Bin())
     elseif cls == 'f'
-        fx = x
         try
             fx = float(x)
+            if isfinite(fx)
+                ty == 'f' || ty == 'F' ? _pfmt_f(io, fs, fx) :
+                ty == 'e' || ty == 'E' ? _pfmt_e(io, fs, fx) :
+                error("format for type g or G is not supported yet (use f or e instead).")
+            else
+                _pfmt_specialf(io, fs, fx)
+            end
         catch
-        end
-        if isfinite(fx)
-            ty == 'f' || ty == 'F' ? _pfmt_f(io, fs, fx) :
-            ty == 'e' || ty == 'E' ? _pfmt_e(io, fs, fx) :
+            ty == 'f' || ty == 'F' ? _pfmt_f(io, fs, x) :
+            ty == 'e' || ty == 'E' ? _pfmt_e(io, fs, x) :
             error("format for type g or G is not supported yet (use f or e instead).")
-        else
-            _pfmt_specialf(io, fs, fx)
         end
     elseif cls == 's'
         _pfmt_s(io, fs, _srepr(x))
