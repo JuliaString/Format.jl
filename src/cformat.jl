@@ -117,6 +117,11 @@ function generate_format_string(;
     String(append!(s, _codeunits(conversion)))
 end
 
+function format(x::T; kwargs...) where T<:Number
+    s = fmt_Number(x, x->format(AbstractFloat(x); kwargs..., width=-1))
+    fmt(s, get(kwargs, :width, 0), get(kwargs, :leftjustified, false) ? :left : :right)
+end
+
 function format( x::T;
                  width::Int=-1,
                  precision::Int= -1,
