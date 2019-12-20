@@ -63,7 +63,7 @@ reset!(Rational)
 fmt_default!(Rational, 'f', prec = 2)
 fmt_default!(Format.ComplexRational, 'f', prec = 2)
 
-@test fmt(3//4, 10, 2) == "      0.75"
+@test fmt(3//4, 10)    == "      0.75"
 @test fmt(3//4, 10, 1) == "       0.8"
-@test fmt(1//2 + 6//2 * im, 23) == "  0.500000 + 3.000000im"
-@test fmt(1//2 + 6//2 * im, 15, 2) == "  0.50 + 3.00im"
+@test fmt(1//2 + 6//2 * im, 15)    == "  0.50 + 3.00im"
+@test fmt(1//2 + 6//2 * im, 15, 1) == "    0.5 + 3.0im"

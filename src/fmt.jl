@@ -74,9 +74,9 @@ end
 # note: if you want to set a default for an abstract type (i.e. AbstractFloat)
 # you'll need to extend this method like here:
 
-const ComplexInteger  = Complex{<:Integer}
-const ComplexFloat    = Complex{<:AbstractFloat}
-const ComplexRational = Complex{<:Rational}
+const ComplexInteger  = Complex{T} where T<:Integer
+const ComplexFloat    = Complex{T} where T<:AbstractFloat
+const ComplexRational = Complex{T} where T<:Rational
 
 default_spec(::Type{<:Integer})        = DEFAULT_FORMATTERS[Integer]
 default_spec(::Type{<:AbstractFloat})  = DEFAULT_FORMATTERS[AbstractFloat]
@@ -85,9 +85,9 @@ default_spec(::Type{<:AbstractChar})   = DEFAULT_FORMATTERS[AbstractChar]
 default_spec(::Type{<:AbstractIrrational}) = DEFAULT_FORMATTERS[AbstractIrrational]
 default_spec(::Type{<:Rational})       = DEFAULT_FORMATTERS[Rational]
 default_spec(::Type{<:Number})         = DEFAULT_FORMATTERS[Number]
-default_spec(::ComplexInteger)         = DEFAULT_FORMATTERS[ComplexInteger]
-default_spec(::ComplexFloat)           = DEFAULT_FORMATTERS[ComplexFloat]
-default_spec(::ComplexRational)        = DEFAULT_FORMATTERS[ComplexRational]
+default_spec(::Type{<:ComplexInteger})   = DEFAULT_FORMATTERS[ComplexInteger]
+default_spec(::Type{<:ComplexFloat})     = DEFAULT_FORMATTERS[ComplexFloat]
+default_spec(::Type{<:ComplexRational})  = DEFAULT_FORMATTERS[ComplexRational]
 
 default_spec(::Type{T}) where {T} =
     get(DEFAULT_FORMATTERS, T) do

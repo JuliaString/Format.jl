@@ -260,6 +260,8 @@ end
     @test fmt(c, 20)                == "2.000000 - 3.100000im"
     fmt_default!(Format.ComplexFloat, 'e')
     @test fmt(c, 20, 1)             == " 2.0e+00 - 3.1e+00im"
+    fmt_default!(Format.ComplexFloat, 'e', :left)
+    @test fmt(c, 20, 1)             == "2.0e+00 - 3.1e+00im "
 
     @test format(c, width=20)              == "           2 - 3.1im"
     @test format(c, width=20, precision=0) == "             2 - 3im"
