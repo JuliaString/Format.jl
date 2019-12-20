@@ -1,6 +1,16 @@
 formatters = Dict{ ASCIIStr, Function }()
 
-cfmt( fmt::ASCIIStr, x ) = m_eval(Expr(:call, generate_formatter( fmt ), x))
+cfmt( fmt::ASCIIStr, x::Union{<:AbstractString,<:Real} ) = m_eval(Expr(:call, generate_formatter( fmt ), x))
+
+function cfmt( fmt_str::ASCIIStr, x::Number )
+    #remove width information
+    new_fmt_str = replace(fmt_str, r"(%(\d+\$)?[\-\+#0' ]*)(\d+)?"=>s"\1")
+    s = fmt_Number(x, x->m_eval(Expr(:call, generate_formatter( new_fmt_str ), AbstractFloat(x))))
+    # extract width information
+    m = match(r"%(\d+\$)?[\-\+#0' ]*(\d+)?", fmt_str)
+    width = m[2] == nothing ? 0 : parse(Int, m[2])
+    fmt(s, width, occursin("-", fmt_str) ? :left : :right)
+end
 
 function checkfmt(fmt)
     test = PF.parse( fmt )
