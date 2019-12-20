@@ -235,7 +235,7 @@ end
     @test pyfmt("⋆>5f", Inf) == "⋆⋆Inf"
 end
 
-@testset "Format Symbols (S) for Irrationals" begin
+@testset "Format Irrationals" begin
     @test pyfmt(">10s", pi) == "         π"
     @test pyfmt("10s", pi) == "π         "
     @test pyfmt("3", MathConstants.eulergamma) == "γ  "
@@ -243,8 +243,29 @@ end
     @test pyfmt("<3s", MathConstants.e) == "ℯ  "
 end
 
-@testset "Format Symbols (S) for Irrationals" begin
-    pyfmt("10s", 3//4) == "3//4      "
-    pyfmt("10", 3//4) == "      3//4"
-    pyfmt("10.1f", 3//4) == "       0.8"
+@testset "Format Rationals" begin
+    @test pyfmt("10s", 3//4)   == "3//4      "
+    @test pyfmt("10", 3//4)    == "3//4      "
+    @test pyfmt(">10", 3//4)   == "      3//4"
+    @test pyfmt("10.1f", 3//4) == "       0.8"
+    @test pyfmt("10.1f", 3//4) == "       0.8"
+    @test pyfmt("10.1e", 3//4) == "   7.5e-01"
+end
+
+@testset "Format Complex Numbers" begin
+    c = 2 - 3.1im
+    @test fmt(round(c), 20, 1)     == "         2.0 - 3.0im"
+    @test fmt(c, 20, 1)             == "         2.0 - 3.1im"
+    @test fmt(c, 20, 2)             == "       2.00 - 3.10im"
+    @test fmt(c, 20)                == "2.000000 - 3.100000im"
+    fmt_default!(Format.ComplexFloat, 'e')
+    @test fmt(c, 20, 1)             == " 2.0e+00 - 3.1e+00im"
+
+    @test format(c, width=20)              == "           2 - 3.1im"
+    @test format(c, width=20, precision=0) == "             2 - 3im"
+    @test format(c, width=20, precision=1) == "         2.0 - 3.1im"
+    @test format(c, width=20, precision=2) == "       2.00 - 3.10im"
+    @test format(c, width=20, precision=2, leftjustified=true) == "2.00 - 3.10im       "
+    @test format(c, width=20, precision=1, conversion="e") == " 2.0e+00 - 3.1e+00im"
+    fmt_default!(Format.ComplexFloat, 'f')
 end

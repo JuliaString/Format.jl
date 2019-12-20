@@ -1,6 +1,6 @@
 formatters = Dict{ ASCIIStr, Function }()
 
-cfmt( fmt::ASCIIStr, x::Union{<:AbstractString,<:Real} ) = m_eval(Expr(:call, generate_formatter( fmt ), x))
+cfmt( fmt::ASCIIStr, x::Union{<:AbstractString,<:Real,<:Rational} ) = m_eval(Expr(:call, generate_formatter( fmt ), x))
 
 function cfmt( fmt_str::ASCIIStr, x::Number )
     #remove width information
