@@ -49,11 +49,14 @@ v = pi
 v = MathConstants.eulergamma
 @test fmt(v, 10, 2) == "         γ"
 
-fmt_default(Real) == fmt_default(Number) == FormatSpec('s', align = '>')
+reset!(Number)
+reset!(Real)
+@test fmt_default(Real) == fmt_default(Number) == FormatSpec('s', align = '>')
 
 @test fmt(2 - 3im, 10) == "   2 - 3im"
 @test fmt(pi - 3im, 15, 2) == "  3.14 - 3.00im"
 
+reset!(Rational)
 @test fmt(3//4, 10) == "      3//4"
 @test fmt(1//2 + 6//2 * im, 15) == " 1//2 + 3//1*im"
 

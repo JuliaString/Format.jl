@@ -272,7 +272,7 @@ function _pfmt_Number_f(out::IO, fs::FormatSpec, x::Number, _pf::Function)
         String(take!(io))
     end
     s = fmt_Number(x, f)
-    _pfmt_s(out, fs, s)
+    _pfmt_s(out, FormatSpec(fs, tsep = false), s)
 end
 
 function _pfmt_Number_i(out::IO, fs::FormatSpec, x::Number, op::Op, _pf::Function) where {Op}
@@ -284,7 +284,7 @@ function _pfmt_Number_i(out::IO, fs::FormatSpec, x::Number, op::Op, _pf::Functio
         String(take!(io))
     end
     s = fmt_Number(x, f)
-    _pfmt_s(out, fs, s)
+    _pfmt_s(out, FormatSpec(fs, tsep = false), s)
 end
 
 function _pfmt_i(out::IO, fs::FormatSpec, x::Number, op::Op) where {Op}
