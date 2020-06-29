@@ -3,7 +3,7 @@ formatters = Dict{ ASCIIStr, Function }()
 cfmt( fmt::ASCIIStr, x ) = m_eval(Expr(:call, generate_formatter( fmt ), x))
 
 function checkfmt(fmt)
-    test = PF.parse( fmt )
+    test = Printf.parse( fmt )
     (length( test ) == 1 && typeof( test[1] ) <: Tuple) ||
         error( "Only one AND undecorated format string is allowed")
 end
