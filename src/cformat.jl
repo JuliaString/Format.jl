@@ -1,17 +1,67 @@
+@static if VERSION > v"1.6.0-DEV.854"
+
+const NoCommas    = 0
+const CheckCommas = 1
+const CheckRat    = 2
+const AddCommas   = 3
+
+const formatters = Dict{ ASCIIStr, Tuple{Printf.Format, Int} }()
+
+function _checkfmt(fmt)
+    test = Printf.Format(fmt)
+    len = length(test.formats)
+    len === 0 && error("Invalid format string $fmt")
+    len === 1 || error("Only one undecorated format string is allowed")
+    test
+end
+
+function _get_formatter(fmt)
+    global formatters
+
+    chkfmt = get(formatters, fmt, nothing)
+    chkfmt === nothing || return chkfmt
+    # Check for thousands separator
+    if occursin("'", fmt)
+        conversion = fmt[end]
+        conversion in "sduifFgG" ||
+            error( string("thousand separator not defined for ", conversion, " conversion") )
+        typ = conversion in "dui" ? CheckCommas : conversion === 's' ? CheckRat : AddCommas
+        formatters[fmt] = (_checkfmt( replace( fmt, "'" => ""; count=1 ) ), typ)
+    else
+        formatters[fmt] = (_checkfmt(fmt), NoCommas)
+    end
+end
+
+function cfmt(fmt::ASCIIStr, x::T) where {T}
+    formatter, typ = _get_formatter(fmt)
+    s = Printf.format(formatter, x)
+    typ === NoCommas ? s :
+        typ === CheckCommas ? checkcommas(s) :
+        (typ === CheckRat && T <: Rational) ? addcommasrat(s) : addcommasreal(s)
+end
+
+function _checkrat(formatter, x::T) where {T}
+    s = Printf.format(formatter, x)
+    T <: Rational ? addcommasrat(s) : addcommasreal(s)
+end
+
+function generate_formatter( fmt::ASCIIStr )
+    formatter, typ = _get_formatter(fmt)
+    typ === NoCommas ? x -> Printf.format(formatter, x) :
+        typ === CheckCommas ? x -> checkcomma(Printf.format(formatter, x)) :
+        typ === CheckRat ? x -> _checkrat(formatter, x) :
+        x -> addcommasreal(Printf.format(formatter, x))
+end
+
+else
 formatters = Dict{ ASCIIStr, Function }()
 
 cfmt( fmt::ASCIIStr, x ) = m_eval(Expr(:call, generate_formatter( fmt ), x))
 
 function checkfmt(fmt)
-    @static if VERSION > v"1.6.0-DEV.854"
-        test = Printf.Format(fmt)
-        length(test.formats) == 1 ||
-            error( "Only one AND undecorated format string is allowed")
-    else
-        test = @static VERSION >= v"1.4.0-DEV.180" ? Printf.parse(fmt) : Base.Printf.parse( fmt )
-        (length( test ) == 1 && typeof( test[1] ) <: Tuple) ||
-            error( "Only one AND undecorated format string is allowed")
-    end
+    test = @static VERSION >= v"1.4.0-DEV.180" ? Printf.parse(fmt) : Base.Printf.parse( fmt )
+    (length( test ) == 1 && typeof( test[1] ) <: Tuple) ||
+        error( "Only one AND undecorated format string is allowed")
 end
 
 function generate_formatter( fmt::ASCIIStr )
@@ -42,6 +92,7 @@ function generate_formatter( fmt::ASCIIStr )
             @eval((x::Real)->addcommasreal(@sprintf( $fmtactual, x )))
         end
     return (formatters[ fmt ] = x->Base.invokelatest(formatter, x))
+end
 end
 
 function addcommasreal(s)

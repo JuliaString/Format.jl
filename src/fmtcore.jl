@@ -217,6 +217,14 @@ function _pfmt_e(out::IO, fs::FormatSpec, x::AbstractFloat)
         rax = round(ax; sigdigits = fs.prec + 1)
         e = floor(Integer, log10(rax))  # exponent
         u = rax * exp10(-e)  # significand
+        i = 0
+        v10 = 1
+        while isinf(u)
+            i += 1
+            i > 18 && (u = 0.0; e = 0; break)
+            v10 *= 10
+            u = v10 * rax * exp(-e - i)
+        end
     end
 
     # calculate length
