@@ -1,98 +1,32 @@
-@static if VERSION > v"1.6.0-DEV.854"
+include("printf.jl")
 
-const NoCommas    = 0
-const CheckCommas = 1
-const CheckRat    = 2
-const AddCommas   = 3
-
-const formatters = Dict{ ASCIIStr, Tuple{Printf.Format, Int} }()
-
-function _checkfmt(fmt)
-    test = Printf.Format(fmt)
-    len = length(test.formats)
-    len === 0 && error("Invalid format string $fmt")
-    len === 1 || error("Only one undecorated format string is allowed")
-    test
-end
+const _formatters = Dict{ASCIIStr,FmtSpec}()
 
 function _get_formatter(fmt)
-    global formatters
+    global _formatters
 
-    chkfmt = get(formatters, fmt, nothing)
+    chkfmt = get(_formatters, fmt, nothing)
     chkfmt === nothing || return chkfmt
-    # Check for thousands separator
-    if occursin("'", fmt)
-        conversion = fmt[end]
-        conversion in "sduifFgG" ||
-            error( string("thousand separator not defined for ", conversion, " conversion") )
-        typ = conversion in "dui" ? CheckCommas : conversion === 's' ? CheckRat : AddCommas
-        formatters[fmt] = (_checkfmt( replace( fmt, "'" => ""; count=1 ) ), typ)
-    else
-        formatters[fmt] = (_checkfmt(fmt), NoCommas)
-    end
+    _formatters[fmt] = FmtSpec(fmt)
 end
 
-function cfmt(fmt::ASCIIStr, x::T) where {T}
-    formatter, typ = _get_formatter(fmt)
-    s = Printf.format(formatter, x)
-    typ === NoCommas ? s :
-        typ === CheckCommas ? checkcommas(s) :
-        (typ === CheckRat && T <: Rational) ? addcommasrat(s) : addcommasreal(s)
+_cfmt_comma(fspec::FmtSpec, x) = addcommasreal(_cfmt(fspec, x))
+_cfmt_comma(fspec::FmtSpec{FmtStr}, x::Rational) =  addcommasrat(_cfmt(fspec, x))
+_cfmt_comma(fspec::FmtSpec{<:FmtInts}, x) = checkcommas(_cfmt(fspec, x))
+
+function _cfmt(fspec::FmtSpec, x)
+    sv = Base.StringVector(23) # Trust that lower level code will expand if necessary
+    pos = _fmt(sv, 1, fspec, x)
+    resize!(sv, pos - 1)
+    String(sv)
 end
 
-function _checkrat(formatter, x::T) where {T}
-    s = Printf.format(formatter, x)
-    T <: Rational ? addcommasrat(s) : addcommasreal(s)
-end
+cfmt(fspec::FmtSpec, x) = fspec.tsep == 0 ? _cfmt(fspec, x) : _cfmt_comma(fspec, x)
+cfmt(fmtstr::ASCIIStr, x) = cfmt(_get_formatter(fmtstr), x)
 
-function generate_formatter( fmt::ASCIIStr )
-    formatter, typ = _get_formatter(fmt)
-    typ === NoCommas ? x -> Printf.format(formatter, x) :
-        typ === CheckCommas ? x -> checkcomma(Printf.format(formatter, x)) :
-        typ === CheckRat ? x -> _checkrat(formatter, x) :
-        x -> addcommasreal(Printf.format(formatter, x))
-end
-
-else
-formatters = Dict{ ASCIIStr, Function }()
-
-cfmt( fmt::ASCIIStr, x ) = m_eval(Expr(:call, generate_formatter( fmt ), x))
-
-function checkfmt(fmt)
-    test = @static VERSION >= v"1.4.0-DEV.180" ? Printf.parse(fmt) : Base.Printf.parse( fmt )
-    (length( test ) == 1 && typeof( test[1] ) <: Tuple) ||
-        error( "Only one AND undecorated format string is allowed")
-end
-
-function generate_formatter( fmt::ASCIIStr )
-    global formatters
-
-    haskey( formatters, fmt ) && return formatters[fmt]
-
-    if !occursin("'", fmt)
-        checkfmt(fmt)
-        formatter = @eval(x->@sprintf( $fmt, x ))
-        return (formatters[ fmt ] = x->Base.invokelatest(formatter, x))
-    end
-
-    conversion = fmt[end]
-    conversion in "sduifF" ||
-        error( string("thousand separator not defined for ", conversion, " conversion") )
-
-    fmtactual = replace( fmt, "'" => ""; count=1 )
-    checkfmt( fmtactual )
-    formatter =
-        if !(conversion in "sfF")
-            @eval(x->checkcommas(@sprintf( $fmtactual, x )))
-        elseif endswith( fmtactual, 's')
-            @eval((x::Real)->((eltype(x) <: Rational)
-                              ? addcommasrat(@sprintf( $fmtactual, x ))
-                              : addcommasreal(@sprintf( $fmtactual, x ))))
-        else
-            @eval((x::Real)->addcommasreal(@sprintf( $fmtactual, x )))
-        end
-    return (formatters[ fmt ] = x->Base.invokelatest(formatter, x))
-end
+function generate_formatter(fmt::ASCIIStr)
+    fspec = _get_formatter(fmt)
+    fspec.tsep ? x -> _cfmt_comma(fspec, x) : x -> _cfmt(fspec, x)
 end
 
 function addcommasreal(s)
