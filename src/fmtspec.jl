@@ -164,20 +164,38 @@ _srepr(x) = repr(x)
 _srepr(x::AbstractString) = x
 _srepr(x::AbstractChar) = string(x)
 _srepr(x::Enum) = string(x)
+@static if VERSION < v"1.2.0-DEV"
+    _srepr(x::Irrational{sym}) where {sym} = string(sym)
+end
 
 function printfmt(io::IO, fs::FormatSpec, x)
     cls = fs.cls
     ty = fs.typ
     if cls == 'i'
-        ix = Integer(x)
+        local ix
+        try
+            ix = Integer(x)
+        catch
+            ix = x
+        end
         ty == 'd' || ty == 'n' ? _pfmt_i(io, fs, ix, _Dec()) :
         ty == 'x' ? _pfmt_i(io, fs, ix, _Hex()) :
         ty == 'X' ? _pfmt_i(io, fs, ix, _HEX()) :
         ty == 'o' ? _pfmt_i(io, fs, ix, _Oct()) :
         _pfmt_i(io, fs, ix, _Bin())
     elseif cls == 'f'
-        fx = float(x)
-        if isfinite(fx)
+        local fx, nospecialf
+        try
+            fx = float(x)
+        catch
+            fx = x
+        end
+        try
+            nospecialf = isfinite(fx)
+        catch
+            nospecialf = true
+        end
+        if nospecialf
             ty == 'f' || ty == 'F' ? _pfmt_f(io, fs, fx) :
             ty == 'e' || ty == 'E' ? _pfmt_e(io, fs, fx) :
             error("format for type g or G is not supported yet (use f or e instead).")

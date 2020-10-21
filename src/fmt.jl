@@ -29,7 +29,7 @@ function DefaultSpec(c::AbstractChar, syms...; kwargs...)
     end
 end
 
-const DEFAULT_FORMATTERS = Dict{DataType, DefaultSpec}()
+const DEFAULT_FORMATTERS = Dict{Type{<:Any}, DefaultSpec}()
 
 # adds a new default formatter for this type
 default_spec!(::Type{T}, c::AbstractChar) where {T} =
@@ -73,12 +73,21 @@ end
 # methods to get the current default objects
 # note: if you want to set a default for an abstract type (i.e. AbstractFloat)
 # you'll need to extend this method like here:
+
+const ComplexInteger  = Complex{T} where T<:Integer
+const ComplexFloat    = Complex{T} where T<:AbstractFloat
+const ComplexRational = Complex{T} where T<:Rational
+
 default_spec(::Type{<:Integer})        = DEFAULT_FORMATTERS[Integer]
 default_spec(::Type{<:AbstractFloat})  = DEFAULT_FORMATTERS[AbstractFloat]
 default_spec(::Type{<:AbstractString}) = DEFAULT_FORMATTERS[AbstractString]
 default_spec(::Type{<:AbstractChar})   = DEFAULT_FORMATTERS[AbstractChar]
 default_spec(::Type{<:AbstractIrrational}) = DEFAULT_FORMATTERS[AbstractIrrational]
+default_spec(::Type{<:Rational})       = DEFAULT_FORMATTERS[Rational]
 default_spec(::Type{<:Number})         = DEFAULT_FORMATTERS[Number]
+default_spec(::Type{<:ComplexInteger})   = DEFAULT_FORMATTERS[ComplexInteger]
+default_spec(::Type{<:ComplexFloat})     = DEFAULT_FORMATTERS[ComplexFloat]
+default_spec(::Type{<:ComplexRational})  = DEFAULT_FORMATTERS[ComplexRational]
 
 default_spec(::Type{T}) where {T} =
     get(DEFAULT_FORMATTERS, T) do
@@ -189,7 +198,7 @@ function fmt end
 # TODO: do more caching to optimize repeated calls
 
 # creates a new FormatSpec by overriding the defaults and passes it to pyfmt
-# note: adding kwargs is only appropriate for one-off formatting.  
+# note: adding kwargs is only appropriate for one-off formatting.
 #       normally it will be much faster to change the fmt_default formatting as needed
 function fmt(x; kwargs...)
     fspec = fmt_default(x)
@@ -220,9 +229,13 @@ end
 for (t, c) in [(Integer,'d'),
                (AbstractFloat,'f'),
                (AbstractChar,'c'),
-               (AbstractString,'s')]
+               (AbstractString,'s'),
+               (ComplexInteger,'d'),
+               (ComplexFloat,'f')]
     default_spec!(t, c)
 end
 
-default_spec!(Number, 's', :right)
+default_spec!(Rational, 's', :right)
 default_spec!(AbstractIrrational, 's', :right)
+default_spec!(ComplexRational, 's', :right)
+default_spec!(Number, 's', :right)

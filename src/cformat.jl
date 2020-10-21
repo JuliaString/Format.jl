@@ -1,6 +1,16 @@
 formatters = Dict{ ASCIIStr, Function }()
 
-cfmt( fmt::ASCIIStr, x ) = m_eval(Expr(:call, generate_formatter( fmt ), x))
+cfmt( fmt::ASCIIStr, x::Union{<:AbstractString,<:Real,<:Rational,<:Char} ) = m_eval(Expr(:call, generate_formatter( fmt ), x))
+
+function cfmt( fmt_str::ASCIIStr, x::Number )
+    #remove width information
+    new_fmt_str = replace(fmt_str, r"(%(\d+\$)?[\-\+#0' ]*)(\d+)?"=>s"\1")
+    s = fmt_Number(x, x->m_eval(Expr(:call, generate_formatter( new_fmt_str ), AbstractFloat(x))))
+    # extract width information
+    m = match(r"%(\d+\$)?[\-\+#0' ]*(\d+)?", fmt_str)
+    width = m[2] == nothing ? 0 : parse(Int, m[2])
+    fmt(s, width, occursin("-", fmt_str) ? :left : :right)
+end
 
 function checkfmt(fmt)
     @static if VERSION > v"1.6.0-DEV.854"
@@ -121,6 +131,11 @@ function generate_format_string(;
     precision != -1 &&
         append!(s, _codeunits(string( '.', precision )))
     String(append!(s, _codeunits(conversion)))
+end
+
+function format(x::T; kwargs...) where T<:Number
+    s = fmt_Number(x, x->format(AbstractFloat(x); kwargs..., width=-1))
+    fmt(s, get(kwargs, :width, 0), get(kwargs, :leftjustified, false) ? :left : :right)
 end
 
 function format( x::T;

@@ -187,3 +187,19 @@ end
     @test format( 100, precision=2, suffix="%", conversion="f" ) == "100.00%"
 end
 
+@testset "complex numbers" begin
+    c = 2 - 3.1im
+    @test cfmt("%20.0f", c)  == "             2 - 3im"
+    @test cfmt("%20.1f", c)  == "         2.0 - 3.1im"
+    @test cfmt("%20.2f", c)  == "       2.00 - 3.10im"
+    @test cfmt("%20s", c)    == "         2.0 - 3.1im"
+    @test cfmt("%20.1e", c)  == " 2.0e+00 - 3.1e+00im"
+    @test cfmt("%-20.1e", c) == "2.0e+00 - 3.1e+00im "
+
+    @test format(c, width=20)              == "           2 - 3.1im"
+    @test format(c, width=20, precision=0) == "             2 - 3im"
+    @test format(c, width=20, precision=1) == "         2.0 - 3.1im"
+    @test format(c, width=20, precision=2) == "       2.00 - 3.10im"
+    @test format(c, width=20, precision=2, leftjustified=true) == "2.00 - 3.10im       "
+    @test format(c, width=20, precision=1, conversion="e") == " 2.0e+00 - 3.1e+00im"
+end
