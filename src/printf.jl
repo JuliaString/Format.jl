@@ -9,21 +9,21 @@ struct FmtChr <: FmtType end
 struct FmtStr <: FmtType end
 struct FmtPtr <: FmtType end
 
-struct Fmt_e <: FmtType end
-struct Fmt_f <: FmtType end
-struct Fmt_g <: FmtType end
-struct Fmt_a <: FmtType end
+struct FmtFltE <: FmtType end
+struct FmtFltF <: FmtType end
+struct FmtFltG <: FmtType end
+struct FmtFltA <: FmtType end
 
-struct Fmt_n <: FmtType end
+struct FmtN <: FmtType end
 
 const VALID_FMTS = b"duoxefgacsipnDUOXEFGACS"
 
-const FMT_TYPES = [FmtDec, FmtDec, FmtOct, FmtHex, Fmt_e, Fmt_f, Fmt_g, Fmt_a, FmtChr, FmtStr,
-                   FmtDec, FmtPtr, Fmt_n]
+const FMT_TYPES = [FmtDec, FmtDec, FmtOct, FmtHex, FmtFltE, FmtFltF, FmtFltG, FmtFltA, FmtChr, FmtStr,
+                   FmtDec, FmtPtr, FmtN]
 
 # format specifier categories
 const FmtInts = Union{FmtDec, FmtOct, FmtHex}
-const FmtFlts = Union{Fmt_e, Fmt_f, Fmt_g, Fmt_a}
+const FmtFlts = Union{FmtFltE, FmtFltF, FmtFltG, FmtFltA}
 
 """
 Typed representation of a format specifier.
@@ -58,7 +58,7 @@ Base.string(f::FmtSpec; modifier::String="") =
 Base.show(io::IO, f::FmtSpec) = print(io, string(f))
 
 floatfmt(s::FmtSpec) =
-    FmtSpec{Fmt_f}(s.char, s.tsep, s.leftalign, s.plus, s.space, s.zero, s.altf, s.width, 0)
+    FmtSpec{FmtFltF}(s.char, s.tsep, s.leftalign, s.plus, s.space, s.zero, s.altf, s.width, 0)
 ptrfmt(s::FmtSpec, x) =
     FmtSpec{FmtHex}(s.char, s.tsep, s.leftalign, s.plus, s.space, s.zero, true, s.width,
                     ifelse(sizeof(x) == 8, 16, 8))
@@ -163,7 +163,7 @@ function FmtSpec(f::AbstractString)
     if fmttyp <: FmtInts && prec > 0
         zero = false
     elseif !parsedprecdigits
-        if (fmttyp === FmtStr || fmttyp === FmtChr || fmttyp === Fmt_a)
+        if (fmttyp === FmtStr || fmttyp === FmtChr || fmttyp === FmtFltA)
             prec = -1
         elseif fmttyp <: FmtFlts
             prec = 6
@@ -172,7 +172,7 @@ function FmtSpec(f::AbstractString)
     FmtSpec{fmttyp}(b, tsep, leftalign, plus, space, zero, altf, width, prec)
 end
 
-@inline gethexbase(spec) = spec.char < 'a' ? b"0123456789ABCDEF" : b"0123456789abcdef"
+@inline gethexbase(spec) = spec.char < UInt8('a') ? b"0123456789ABCDEF" : b"0123456789abcdef"
 
 @inline upchar(spec, ch) = (spec.char & 0x20) | UInt8(ch)
 
@@ -462,19 +462,19 @@ function _fmt(buf, pos, spec::FmtSpec{T}, arg) where {T <: FmtFlts}
     buflen < needed && resize!(buf, pos + needed)
 
     x = tofloat(arg)
-    if T === Fmt_e
+    if T === FmtFltE
         newpos = Ryu.writeexp(buf, pos, x, spec.prec, spec.plus, spec.space,
                               spec.altf, upchar(spec, 'E'), UInt8('.'))
-    elseif T === Fmt_f
-        newpos = Ryu.writefixed(buf, pos, x, spec.prec, prec, spec.plus, spec.space,
-                                spec.altf, UInt8('.'))
-    elseif T === Fmt_g
+    elseif T === FmtFltF
+        newpos = Ryu.writefixed(buf, pos, x, spec.prec, spec.plus, spec.space, spec.altf,
+                                UInt8('.'))
+    elseif T === FmtFltG
         prec = spec.prec
         prec = prec == 0 ? 1 : prec
         x = round(x, sigdigits=prec)
         newpos = Ryu.writeshortest(buf, pos, x, spec.plus, spec.space, spec.altf, prec,
                                    upchar(spec, 'E'), true, UInt8('.'))
-    elseif T === Fmt_a
+    elseif T === FmtFltA
         newpos = output_fmt_a(buf, pos, spec, x < 0, abs(x))
     end
     if newpos - pos < width
@@ -486,7 +486,7 @@ function _fmt(buf, pos, spec::FmtSpec{T}, arg) where {T <: FmtFlts}
             # right aligned
             n = width - (newpos - pos)
             if spec.zero
-                ex = (arg < 0 || (spec.plus | spec.space)) + ifelse(T === Fmt_a, 2, 0)
+                ex = (arg < 0 || (spec.plus | spec.space)) + ifelse(T === FmtFltA, 2, 0)
                 so = pos + ex
                 len = (newpos - pos) - ex
                 copyto!(buf, so + n, buf, so, len)
