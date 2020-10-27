@@ -26,7 +26,7 @@ cfmt(fmtstr::ASCIIStr, x) = cfmt(_get_formatter(fmtstr), x)
 
 function generate_formatter(fmt::ASCIIStr)
     fspec = _get_formatter(fmt)
-    fspec.tsep ? x -> _cfmt_comma(fspec, x) : x -> _cfmt(fspec, x)
+    fspec.tsep == 0 ? x -> _cfmt(fspec, x) : x -> _cfmt_comma(fspec, x)
 end
 
 function addcommasreal(s)
