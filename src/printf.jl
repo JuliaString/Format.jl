@@ -235,7 +235,8 @@ end
 function _fmt(buf, pos, spec::FmtSpec{FmtStr}, arg)
     altf, width, prec = spec.altf, spec.width, spec.prec
     str = altf && (arg isa Symbol || arg isa AbstractString) ? repr(arg) : string(arg)
-    op = p = prec == -1 ? length(str) : prec
+    slen = length(str)
+    op = p = prec == -1 ? slen : min(slen, prec)
     # Make sure there is enough room in buffer
     nlen = max(width, p)
     buflen = sizeof(buf) - pos

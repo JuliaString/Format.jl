@@ -76,6 +76,13 @@ function runtime_float()
         cfmt( "%10.4f", _erfinv( rand() ) )
     end
 end
+function runtime_float_spec()
+    set_seed!( 10 )
+    fs = Format.FmtSpec("%10.4f")
+    for i in 1:200000
+        cfmt( fs, _erfinv( rand() ) )
+    end
+end
 function runtime_float_bypass()
     f = generate_formatter( "%10.4f" )
     set_seed!( 10 )
@@ -87,9 +94,11 @@ end
 println()
 println( "float64 @sprintf speed")
 @time native_float()
-println( "float64 sprintf speed")
+println( "float64 cfmt speed")
 @time runtime_float()
-println( "float64 sprintf speed, bypass repeated lookup")
+println( "float64 cfmt spec speed")
+@time runtime_float_spec()
+println( "float64 cfmt speed, bypass repeated lookup")
 @time runtime_float_bypass()
 
 @testset "test commas..." begin
@@ -101,6 +110,10 @@ println( "float64 sprintf speed, bypass repeated lookup")
     @test cfmt( "%'f", -Inf ) == "-Inf"
     @test cfmt( "%'s", 1000.0 ) == "1,000.0"
     @test cfmt( "%'s", 1234567.0 ) == "1.234567e6"
+end
+
+@testset "Test bug introduced by stdlib/Printf rewrite" begin
+    @test cfmt( "%4.2s", "a" ) == "   a"
 end
 
 @testset "test format..." begin
@@ -165,7 +178,9 @@ end
     # same with unspecified width
     @test format(  12345678, commas=true, parens=true )== " 12,345,678 "
     @test format( -12345678, commas=true, parens=true )== "(12,345,678)"
+end
 
+@testset "autoscale" begin
     @test format( 1.2e9, autoscale = :metric ) == "1.2G"
     @test format( 1.2e6, autoscale = :metric ) == "1.2M"
     @test format( 1.2e3, autoscale = :metric ) == "1.2k"
@@ -181,7 +196,9 @@ end
     @test format( 0x100000, autoscale = :binary ) == "1Mi"
     @test format( 0x800, autoscale = :binary ) == "2Ki"
     @test format( 0x400, autoscale = :binary ) == "1Ki"
+end
 
+@testset "suffix" begin
     @test format( 100.00, precision=2, suffix="%" ) == "100.00%"
     @test format( 100, precision=2, suffix="%" ) == "100%"
     @test format( 100, precision=2, suffix="%", conversion="f" ) == "100.00%"
