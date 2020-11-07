@@ -189,8 +189,6 @@ module Format
 
 import Base.show
 
-using Printf
-
 _stdout() = stdout
 _codeunits(s) = Vector{UInt8}(codeunits(s))
 m_eval(expr) = Core.eval(@__MODULE__, expr)

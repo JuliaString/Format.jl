@@ -38,68 +38,7 @@ end
 
 @time test_equality()
 
-println( "\nTest speed" )
-
-function native_int()
-    for i in 1:200000
-        @sprintf( "%10d", i )
-    end
-end
-function runtime_int()
-    for i in 1:200000
-        cfmt( "%10d", i )
-    end
-end
-function runtime_int_bypass()
-    f = generate_formatter( "%10d" )
-    for i in 1:200000
-        f( i )
-    end
-end
-
-println( "integer @sprintf speed")
-@time native_int()
-println( "integer sprintf speed")
-@time runtime_int()
-println( "integer sprintf speed, bypass repeated lookup")
-@time runtime_int_bypass()
-
-function native_float()
-    set_seed!( 10 )
-    for i in 1:200000
-        @sprintf( "%10.4f", _erfinv( rand() ) )
-    end
-end
-function runtime_float()
-    set_seed!( 10 )
-    for i in 1:200000
-        cfmt( "%10.4f", _erfinv( rand() ) )
-    end
-end
-function runtime_float_spec()
-    set_seed!( 10 )
-    fs = Format.FmtSpec("%10.4f")
-    for i in 1:200000
-        cfmt( fs, _erfinv( rand() ) )
-    end
-end
-function runtime_float_bypass()
-    f = generate_formatter( "%10.4f" )
-    set_seed!( 10 )
-    for i in 1:200000
-        f( _erfinv( rand() ) )
-    end
-end
-
-println()
-println( "float64 @sprintf speed")
-@time native_float()
-println( "float64 cfmt speed")
-@time runtime_float()
-println( "float64 cfmt spec speed")
-@time runtime_float_spec()
-println( "float64 cfmt speed, bypass repeated lookup")
-@time runtime_float_bypass()
+include("speedtest.jl")
 
 @testset "test commas..." begin
     @test cfmt( "%'d", 1000 ) == "1,000"
