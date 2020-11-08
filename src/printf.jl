@@ -430,9 +430,16 @@ function _get_strspec(spec)
     _strspec[spec] = string(spec; modifier="R")
 end
 
+@static if VERSION < v"1.5"
+_snprintf(ptr, siz, spec, arg) =
+    ccall((:mpfr_snprintf,:libmpfr), Int32,
+          (Ptr{UInt8}, Culong, Ptr{UInt8}, Ref{BigFloat}...),
+          ptr, siz, spec, arg)
+else
 _snprintf(ptr, siz, spec, arg) =
     @ccall "libmpfr".mpfr_snprintf(ptr::Ptr{UInt8}, siz::Csize_t, spec::Ptr{UInt8};
                                    arg::Ref{BigFloat})::Cint
+end
 
 function _fmt(buf, pos, spec::FmtSpec{<:FmtFlts}, arg::BigFloat)
     isfinite(arg) || return _fmt(buf, pos, spec, Float64(arg))
