@@ -209,9 +209,9 @@ function _fmt(buf, pos, spec::FmtSpec{FmtChr}, arg)
     width = spec.width - 1
     width <= 0 && return writechar(buf, pos, ch)
     if spec.leftalign
-        writechar(buf, padn(buf, pos, width), ch)
-    else
         padn(buf, writechar(buf, pos, ch), width)
+    else
+        writechar(buf, padn(buf, pos, width), ch)
     end
 end
 
