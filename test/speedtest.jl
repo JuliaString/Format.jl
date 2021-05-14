@@ -7,11 +7,13 @@ function native_int()
         @sprintf( "%10d", i )
     end
 end
+@static if VERSION >= v"1.6"
 function format_int()
     fmt = Printf.Format( "%10d" )
     for i in 1:BENCH_REP
         Printf.format( fmt, i )
     end
+end
 end
 function runtime_int()
     for i in 1:BENCH_REP
@@ -33,8 +35,10 @@ end
 
 println( "integer @sprintf speed")
 @time native_int()
-println( "integer format speed")
-@time format_int()
+@static if VERSION >= v"1.6"
+    println( "integer format speed")
+    @time format_int()
+end
 println( "integer cfmt speed")
 @time runtime_int()
 println( "integer cfmt spec speed")
@@ -50,11 +54,13 @@ function native_float()
         @sprintf( "%10.4f", v)
     end
 end
+@static if VERSION >= v"1.6"
 function format_float()
     fmt = Printf.Format( "%10.4f" )
     for v in testflts
         Printf.format( fmt, v )
     end
+end
 end
 function runtime_float()
     for v in testflts
@@ -77,8 +83,10 @@ end
 println()
 println( "float64 @sprintf speed")
 @time native_float()
+@static if VERSION >= v"1.6"
 println( "float64 format speed")
 @time format_float()
+end
 println( "float64 cfmt speed")
 @time runtime_float()
 println( "float64 cfmt spec speed")
