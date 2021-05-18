@@ -14,7 +14,7 @@
     @test fs.tsep == false
 end
 
-_contains(s, r) = @static VERSION < v"0.7.0-DEV" ? contains(s, r) : occursin(r, s)
+_contains(s, r) = occursin(r, s)
 
 @testset "Show" begin
     x = FormatSpec("#8,d")
@@ -70,6 +70,11 @@ end
     @test pyfmt("⋆>5s", "αβγ") == "⋆⋆αβγ"
     @test pyfmt("*<5s", "abc") == "abc**"
     @test pyfmt("⋆<5s", "αβγ") == "αβγ⋆⋆"
+end
+
+@testset "Format Symbol" begin
+    @test pyfmt("", :abc) == "abc"
+    @test pyfmt("s", :abc) == "abc"
 end
 
 @testset "Format Char" begin
