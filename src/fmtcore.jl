@@ -19,15 +19,12 @@ function _pfmt_s(out::IO, fs::FormatSpec, s::Union{AbstractString,AbstractChar})
     slen = length(s)
     if wid <= slen
         print(out, s)
+    elseif fs.align == '<'
+        print(out, s)
+        _repprint(out, fs.fill, wid-slen)
     else
-        a = fs.align
-        if a == '<'
-            print(out, s)
-            _repprint(out, fs.fill, wid-slen)
-        else
-            _repprint(out, fs.fill, wid-slen)
-            print(out, s)
-        end
+        _repprint(out, fs.fill, wid-slen)
+        print(out, s)
     end
 end
 
@@ -43,6 +40,11 @@ _div(x::Integer, ::_Dec) = div(x, 10)
 _div(x::Integer, ::_Bin) = x >> 1
 _div(x::Integer, ::_Oct) = x >> 3
 _div(x::Integer, ::Union{_Hex, _HEX}) = x >> 4
+
+_str(x::Integer, ::_Dec) = string(x, base=10)
+_str(x::Integer, ::_Bin) = string(x, base=2)
+_str(x::Integer, ::_Oct) = string(x, base=8)
+_str(x::Integer, ::Union{_Hex, _HEX}) = string(x, base=16)
 
 function _ndigits(x::Integer, op)  # suppose x is non-negative
     m = 1
@@ -96,15 +98,53 @@ function _pfmt_intdigits(out::IO, ax::T, op::Op) where {Op, T<:Integer}
     end
 end
 
+function _pfmt_intmin(out::IO, ip::ASCIIStr, zs::Integer, s::String)
+    # print sign
+    print(out, '-')
+    # print prefix
+    isempty(ip) || print(out, ip)
+    # print padding zeros
+    zs > 0 && _repprint(out, '0', zs)
+    # print actual digits
+    print(out, SubString(s, 2))
+    nothing
+end
+
+# Special case were abs would give error
+function _pfmt_imin(out::IO, fs::FormatSpec, x::Integer, op::Op) where {Op}
+    s = _str(x, op)
+    xlen = length(s)
+    # prefix (e.g. 0x, 0b, 0o)
+    ip = ""
+    if fs.ipre
+        ip = _ipre(op)
+        xlen += length(ip)
+    end
+
+    # printing
+    wid = fs.width
+    if wid <= xlen
+        _pfmt_intmin(out, ip, 0, s)
+    elseif fs.zpad
+        _pfmt_intmin(out, ip, wid-xlen, s)
+    elseif fs.align == '<'
+        _pfmt_intmin(out, ip, 0, s)
+        _repprint(out, fs.fill, wid-xlen)
+    else
+        _repprint(out, fs.fill, wid-xlen)
+        _pfmt_intmin(out, ip, 0, s)
+    end
+end
+
 function _pfmt_i(out::IO, fs::FormatSpec, x::Integer, op::Op) where {Op}
+    # Specially handle edge case of typemin
+    x === typemin(typeof(x)) && x isa Signed && return _pfmt_imin(out, fs, x, op)
     # calculate actual length
     ax = abs(x)
-    xlen = _ndigits(abs(x), op)
+    xlen = _ndigits(ax, op)
     # sign char
     sch = _signchar(x, fs.sign)
-    if sch != '\0'
-        xlen += 1
-    end
+    xlen += (sch != '\0')
     # prefix (e.g. 0x, 0b, 0o)
     ip = ""
     if fs.ipre
@@ -118,15 +158,12 @@ function _pfmt_i(out::IO, fs::FormatSpec, x::Integer, op::Op) where {Op}
         _pfmt_int(out, sch, ip, 0, ax, op)
     elseif fs.zpad
         _pfmt_int(out, sch, ip, wid-xlen, ax, op)
+    elseif fs.align == '<'
+        _pfmt_int(out, sch, ip, 0, ax, op)
+        _repprint(out, fs.fill, wid-xlen)
     else
-        a = fs.align
-        if a == '<'
-            _pfmt_int(out, sch, ip, 0, ax, op)
-            _repprint(out, fs.fill, wid-xlen)
-        else
-            _repprint(out, fs.fill, wid-xlen)
-            _pfmt_int(out, sch, ip, 0, ax, op)
-        end
+        _repprint(out, fs.fill, wid-xlen)
+        _pfmt_int(out, sch, ip, 0, ax, op)
     end
 end
 
@@ -147,10 +184,9 @@ function _pfmt_float(out::IO, sch::AbstractChar, zs::Integer, intv::Real, decv::
     else
         _pfmt_intdigits(out, intv, _Dec())
     end
-    # print decimal point
-    print(out, '.')
     # print decimal part
     if prec > 0
+        print(out, '.')
         nd = _ndigits(idecv, _Dec())
         nd < prec && _repprint(out, '0', prec - nd)
         _pfmt_intdigits(out, idecv, _Dec())
@@ -165,7 +201,7 @@ function _pfmt_f(out::IO, fs::FormatSpec, x::AbstractFloat)
     decv = rax - intv
 
     # calculate length
-    xlen = _ndigits(intv, _Dec()) + 1 + fs.prec
+    xlen = _ndigits(intv, _Dec()) + ifelse(fs.prec > 0, fs.prec + 1, 0)
     sch != '\0' && (xlen += 1)
 
     # print
@@ -217,6 +253,14 @@ function _pfmt_e(out::IO, fs::FormatSpec, x::AbstractFloat)
         rax = round(ax; sigdigits = fs.prec + 1)
         e = floor(Integer, log10(rax))  # exponent
         u = rax * exp10(-e)  # significand
+        i = 0
+        v10 = 1
+        while isinf(u)
+            i += 1
+            i > 18 && (u = 0.0; e = 0; break)
+            v10 *= 10
+            u = v10 * rax * exp(-e - i)
+        end
     end
 
     # calculate length

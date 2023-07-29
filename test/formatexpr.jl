@@ -53,3 +53,11 @@ end
 @testset "format with filter" begin
     @test format("{1|>abs2} + {2|>abs2:.2f}", 2, 3) == "4 + 9.00"
 end
+
+@testset "test typemin/typemax edge cases" begin
+    f = FormatExpr("{1:+d}")
+    for T in (Int8,Int16,Int32,Int64)
+        @test format(f, typemin(T)) == string(typemin(T))
+        @test format(f, typemax(T)) == "+"*string(typemax(T))
+    end
+end

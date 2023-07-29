@@ -1,47 +1,32 @@
-formatters = Dict{ ASCIIStr, Function }()
+include("printf.jl")
 
-cfmt( fmt::ASCIIStr, x ) = m_eval(Expr(:call, generate_formatter( fmt ), x))
+const _formatters = Dict{ASCIIStr,FmtSpec}()
 
-function checkfmt(fmt)
-    @static if VERSION > v"1.6.0-DEV.854"
-        test = Printf.Format(fmt)
-        length(test.formats) == 1 ||
-            error( "Only one AND undecorated format string is allowed")
-    else
-        test = @static VERSION >= v"1.4.0-DEV.180" ? Printf.parse(fmt) : Base.Printf.parse( fmt )
-        (length( test ) == 1 && typeof( test[1] ) <: Tuple) ||
-            error( "Only one AND undecorated format string is allowed")
-    end
+function _get_formatter(fmt)
+    global _formatters
+
+    chkfmt = get(_formatters, fmt, nothing)
+    chkfmt === nothing || return chkfmt
+    _formatters[fmt] = FmtSpec(fmt)
 end
 
-function generate_formatter( fmt::ASCIIStr )
-    global formatters
+_cfmt_comma(fspec::FmtSpec, x) = addcommasreal(_cfmt(fspec, x))
+_cfmt_comma(fspec::FmtSpec{FmtStr}, x::Rational) =  addcommasrat(_cfmt(fspec, x))
+_cfmt_comma(fspec::FmtSpec{<:FmtInts}, x) = checkcommas(_cfmt(fspec, x))
 
-    haskey( formatters, fmt ) && return formatters[fmt]
+function _cfmt(fspec::FmtSpec, x)
+    sv = Base.StringVector(23) # Trust that lower level code will expand if necessary
+    pos = _fmt(sv, 1, fspec, x)
+    resize!(sv, pos - 1)
+    String(sv)
+end
 
-    if !occursin("'", fmt)
-        checkfmt(fmt)
-        formatter = @eval(x->@sprintf( $fmt, x ))
-        return (formatters[ fmt ] = x->Base.invokelatest(formatter, x))
-    end
+cfmt(fspec::FmtSpec, x) = fspec.tsep == 0 ? _cfmt(fspec, x) : _cfmt_comma(fspec, x)
+cfmt(fmtstr::ASCIIStr, x) = cfmt(_get_formatter(fmtstr), x)
 
-    conversion = fmt[end]
-    conversion in "sduifF" ||
-        error( string("thousand separator not defined for ", conversion, " conversion") )
-
-    fmtactual = replace( fmt, "'" => ""; count=1 )
-    checkfmt( fmtactual )
-    formatter =
-        if !(conversion in "sfF")
-            @eval(x->checkcommas(@sprintf( $fmtactual, x )))
-        elseif endswith( fmtactual, 's')
-            @eval((x::Real)->((eltype(x) <: Rational)
-                              ? addcommasrat(@sprintf( $fmtactual, x ))
-                              : addcommasreal(@sprintf( $fmtactual, x ))))
-        else
-            @eval((x::Real)->addcommasreal(@sprintf( $fmtactual, x )))
-        end
-    return (formatters[ fmt ] = x->Base.invokelatest(formatter, x))
+function generate_formatter(fmt::ASCIIStr)
+    fspec = _get_formatter(fmt)
+    fspec.tsep == 0 ? x -> _cfmt(fspec, x) : x -> _cfmt_comma(fspec, x)
 end
 
 function addcommasreal(s)
