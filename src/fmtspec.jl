@@ -4,7 +4,7 @@
 #
 #  spec  ::= [[fill]align][sign][#][0][width][,][.prec][type]
 #  fill  ::= <any character>
-#  align ::= '<' | '>'
+#  align ::= '<' | '^' | '>'
 #  sign  ::= '+' | '-' | ' '
 #  width ::= <integer>
 #  prec  ::= <integer>
@@ -84,7 +84,7 @@ end
 
 ## parse FormatSpec from a string
 
-const _spec_regex = r"^(.?[<>])?([ +-])?(#)?(\d+)?(,)?(.\d+)?([bcdeEfFgGnosxX])?$"
+const _spec_regex = r"^(.?[<^>])?([ +-])?(#)?(\d+)?(,)?(.\d+)?([bcdeEfFgGnosxX])?$"
 
 function FormatSpec(s::AbstractString)
     # default spec
@@ -180,8 +180,7 @@ function printfmt(io::IO, fs::FormatSpec, x)
         fx = float(x)
         if isfinite(fx)
             ty == 'f' || ty == 'F' ? _pfmt_f(io, fs, fx) :
-            ty == 'e' || ty == 'E' ? _pfmt_e(io, fs, fx) :
-            error("format for type g or G is not supported yet (use f or e instead).")
+            ty == 'e' || ty == 'E' ? _pfmt_e(io, fs, fx) : _pfmt_g(io, fs, fx)
         else
             _pfmt_specialf(io, fs, fx)
         end

@@ -57,6 +57,8 @@ function _add_kwargs_from_symbols(kwargs, syms::Symbol...)
             d[:align] = '<'
         elseif s == :rjust || s == :right
             d[:align] = '>'
+        elseif s == :center
+            d[:align] = '^'
         elseif s == :commas
             d[:tsep] = true
         elseif s == :zpad || s == :zeropad
@@ -146,6 +148,7 @@ function _optional_commas(x::Real, s::AbstractString, fspec::FormatSpec)
     if fspec.width > 0 && w > fspec.width && w > prevwidth
         # we may have made the string too wide with those commas... gotta fix it
         # left or right alignment ('<' is left)
+        # TODO: handle center alignment
         s = fspec.align == '<' ? rpad(strip(s), fspec.width) : lpad(strip(s), fspec.width)
     end
     s
@@ -165,6 +168,7 @@ Symbol            | Meaning
 ------------------|------------------------------------------
 :ljust or :left   | Left justified, same as < for FormatSpec
 :rjust or :right  | Right justified, same as > for FormatSpec
+:center           | Center justified, same as ^ for FormatSpec
 :zpad or :zeropad | Pad with 0s on left
 :ipre or :prefix  | Whether to prefix 0b, 0o, or 0x
 :commas           | Add commas every 3 digits
@@ -195,6 +199,7 @@ function fmt(x; kwargs...)
     fspec = fmt_default(x)
     isempty(kwargs) || (fspec = FormatSpec(fspec; kwargs...))
     s = pyfmt(fspec, x)
+    # TODO: allow other thousands separators besides comma
     # add the commas now... I was confused as to when this is done currently
     fspec.tsep ? _optional_commas(x, s, fspec) : s
 end
