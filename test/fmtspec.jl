@@ -46,6 +46,7 @@ end
     @test FormatSpec("<8d") == FormatSpec('d'; width=8, align='<')
     @test FormatSpec("#<8d") == FormatSpec('d'; width=8, fill='#', align='<')
     @test FormatSpec("⋆<8d") == FormatSpec('d'; width=8, fill='⋆', align='<')
+    @test FormatSpec("#^8d") == FormatSpec('d'; width=8, fill='#', align='^')
     @test FormatSpec("#8,d") == FormatSpec('d'; width=8, ipre=true, tsep=true)
 end
 
@@ -66,8 +67,12 @@ end
     @test pyfmt("5s", "αβγ") == "αβγ  "
     @test pyfmt(">5s", "abc") == "  abc"
     @test pyfmt(">5s", "αβγ") == "  αβγ"
+    @test pyfmt("^5s", "abc") == " abc "
+    @test pyfmt("^5s", "αβγ") == " αβγ "
     @test pyfmt("*>5s", "abc") == "**abc"
     @test pyfmt("⋆>5s", "αβγ") == "⋆⋆αβγ"
+    @test pyfmt("*^5s", "abc") == "*abc*"
+    @test pyfmt("⋆^5s", "αβγ") == "⋆αβγ⋆"
     @test pyfmt("*<5s", "abc") == "abc**"
     @test pyfmt("⋆<5s", "αβγ") == "αβγ⋆⋆"
 end
@@ -86,8 +91,12 @@ end
     @test pyfmt("3c", 'γ') == "γ  "
     @test pyfmt(">3c", 'c') == "  c"
     @test pyfmt(">3c", 'γ') == "  γ"
+    @test pyfmt("^3c", 'c') == " c "
+    @test pyfmt("^3c", 'γ') == " γ "
     @test pyfmt("*>3c", 'c') == "**c"
     @test pyfmt("⋆>3c", 'γ') == "⋆⋆γ"
+    @test pyfmt("*^3c", 'c') == "*c*"
+    @test pyfmt("⋆^3c", 'γ') == "⋆γ⋆"
     @test pyfmt("*<3c", 'c') == "c**"
     @test pyfmt("⋆<3c", 'γ') == "γ⋆⋆"
 end
@@ -116,12 +125,17 @@ end
     @test pyfmt(" 6d", 123) == "   123"
     @test pyfmt("<6d", 123) == "123   "
     @test pyfmt(">6d", 123) == "   123"
+    @test pyfmt("^6d", 123) == " 123  "
     @test pyfmt("*<6d", 123) == "123***"
     @test pyfmt("⋆<6d", 123) == "123⋆⋆⋆"
+    @test pyfmt("*^6d", 123) == "*123**"
+    @test pyfmt("⋆^6d", 123) == "⋆123⋆⋆"
     @test pyfmt("*>6d", 123) == "***123"
     @test pyfmt("⋆>6d", 123) == "⋆⋆⋆123"
     @test pyfmt("< 6d", 123) == " 123  "
     @test pyfmt("<+6d", 123) == "+123  "
+    @test pyfmt("^ 6d", 123) == "  123 "
+    @test pyfmt("^+6d", 123) == " +123 "
     @test pyfmt("> 6d", 123) == "   123"
     @test pyfmt(">+6d", 123) == "  +123"
 
@@ -130,7 +144,14 @@ end
     @test pyfmt(" d", -123) == "-123"
     @test pyfmt("06d", -123) == "-00123"
     @test pyfmt("<6d", -123) == "-123  "
+    @test pyfmt("^6d", -123) == " -123 "
     @test pyfmt(">6d", -123) == "  -123"
+
+    # Issue #110 (in Formatting.jl)
+    f = FormatExpr("{:+d}")
+    for T in (Int8, Int16, Int32, Int64, Int128)
+        @test format(f, typemin(T)) == string(typemin(T))
+    end
 end
 
 @testset "Format floating point (f)" begin
@@ -150,22 +171,32 @@ end
 
     @test pyfmt("8.2f", 8.376) == "    8.38"
     @test pyfmt("<8.2f", 8.376) == "8.38    "
+    @test pyfmt("^8.2f", 8.376) == "  8.38  "
     @test pyfmt(">8.2f", 8.376) == "    8.38"
     @test pyfmt("8.2f", -8.376) == "   -8.38"
     @test pyfmt("<8.2f", -8.376) == "-8.38   "
+    @test pyfmt("^8.2f", -8.376) == " -8.38  "
     @test pyfmt(">8.2f", -8.376) == "   -8.38"
     @test pyfmt(".0f", 8.376) == "8"
 
+    # Note: these act differently than Python, but it looks like Python might be wrong
+    # in at least some of these cases (zero padding should be *after* the sign, IMO)
     @test pyfmt("<08.2f", 8.376) == "00008.38"
+    @test pyfmt("^08.2f", 8.376) == "00008.38"
     @test pyfmt(">08.2f", 8.376) == "00008.38"
     @test pyfmt("<08.2f", -8.376) == "-0008.38"
+    @test pyfmt("^08.2f", -8.376) == "-0008.38"
     @test pyfmt(">08.2f", -8.376) == "-0008.38"
     @test pyfmt("*<8.2f", 8.376) == "8.38****"
     @test pyfmt("⋆<8.2f", 8.376) == "8.38⋆⋆⋆⋆"
+    @test pyfmt("*^8.2f", 8.376) == "**8.38**"
+    @test pyfmt("⋆^8.2f", 8.376) == "⋆⋆8.38⋆⋆"
     @test pyfmt("*>8.2f", 8.376) == "****8.38"
     @test pyfmt("⋆>8.2f", 8.376) == "⋆⋆⋆⋆8.38"
     @test pyfmt("*<8.2f", -8.376) == "-8.38***"
     @test pyfmt("⋆<8.2f", -8.376) == "-8.38⋆⋆⋆"
+    @test pyfmt("*^8.2f", -8.376) == "*-8.38**"
+    @test pyfmt("⋆^8.2f", -8.376) == "⋆-8.38⋆⋆"
     @test pyfmt("*>8.2f", -8.376) == "***-8.38"
     @test pyfmt("⋆>8.2f", -8.376) == "⋆⋆⋆-8.38"
 
@@ -190,9 +221,12 @@ end
     @test pyfmt("8e", 1234.5678) == "1.234568e+03"
 
     @test pyfmt("<12.2e", 13.89) == "1.39e+01    "
+    @test pyfmt("^12.2e", 13.89) == "  1.39e+01  "
     @test pyfmt(">12.2e", 13.89) == "    1.39e+01"
     @test pyfmt("*<12.2e", 13.89) == "1.39e+01****"
     @test pyfmt("⋆<12.2e", 13.89) == "1.39e+01⋆⋆⋆⋆"
+    @test pyfmt("*^12.2e", 13.89) == "**1.39e+01**"
+    @test pyfmt("⋆^12.2e", 13.89) == "⋆⋆1.39e+01⋆⋆"
     @test pyfmt("*>12.2e", 13.89) == "****1.39e+01"
     @test pyfmt("⋆>12.2e", 13.89) == "⋆⋆⋆⋆1.39e+01"
     @test pyfmt("012.2e", 13.89) == "00001.39e+01"
@@ -218,6 +252,14 @@ end
     @test pyfmt("10.2e", 9.999e99) == " 1.00e+100"
     @test pyfmt("11.2e", BigFloat("9.999e999")) == " 1.00e+1000"
     @test pyfmt("10.2e", -9.999e-100) == " -1.00e-99"
+
+    # issue #84 (from Formatting.jl)
+    @test pyfmt("+11.3e", 1.0e-309) == "+1.000e-309"
+    @test pyfmt("+11.3e", 1.0e-313) == "+1.000e-313"
+
+    # issue #108 (from Formatting.jl)
+    @test pyfmt(".1e", 0.0003) == "3.0e-04"
+    @test pyfmt(".1e", 0.0006) == "6.0e-04"
 end
 
 @testset "Format special floating point value" begin
@@ -238,9 +280,13 @@ end
     @test pyfmt("e", -Inf32) == "-Inf"
 
     @test pyfmt("<5f", Inf) == "Inf  "
+    @test pyfmt("^5f", Inf) == " Inf "
     @test pyfmt(">5f", Inf) == "  Inf"
+
     @test pyfmt("*<5f", Inf) == "Inf**"
     @test pyfmt("⋆<5f", Inf) == "Inf⋆⋆"
+    @test pyfmt("*^5f", Inf) == "*Inf*"
+    @test pyfmt("⋆^5f", Inf) == "⋆Inf⋆"
     @test pyfmt("*>5f", Inf) == "**Inf"
     @test pyfmt("⋆>5f", Inf) == "⋆⋆Inf"
 end

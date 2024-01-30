@@ -15,15 +15,18 @@ end
 ### print string or char
 
 function _pfmt_s(out::IO, fs::FormatSpec, s::Union{AbstractString,AbstractChar})
-    wid = fs.width
-    slen = length(s)
-    if wid <= slen
+    pad = fs.width - length(s)
+    if pad <= 0
         print(out, s)
     elseif fs.align == '<'
         print(out, s)
-        _repprint(out, fs.fill, wid-slen)
+        _repprint(out, fs.fill, pad)
+    elseif fs.align == '^'
+        _repprint(out, fs.fill, pad>>1)
+        print(out, s)
+        _repprint(out, fs.fill, (pad+1)>>1)
     else
-        _repprint(out, fs.fill, wid-slen)
+        _repprint(out, fs.fill, pad)
         print(out, s)
     end
 end
@@ -122,16 +125,20 @@ function _pfmt_imin(out::IO, fs::FormatSpec, x::Integer, op::Op) where {Op}
     end
 
     # printing
-    wid = fs.width
-    if wid <= xlen
+    pad = fs.width - xlen
+    if pad <= 0
         _pfmt_intmin(out, ip, 0, s)
     elseif fs.zpad
-        _pfmt_intmin(out, ip, wid-xlen, s)
+        _pfmt_intmin(out, ip, pad, s)
     elseif fs.align == '<'
         _pfmt_intmin(out, ip, 0, s)
-        _repprint(out, fs.fill, wid-xlen)
+        _repprint(out, fs.fill, pad)
+    elseif fs.align == '^'
+        _repprint(out, fs.fill, pad>>1)
+        _pfmt_intmin(out, ip, 0, s)
+        _repprint(out, fs.fill, (pad+1)>>1)
     else
-        _repprint(out, fs.fill, wid-xlen)
+        _repprint(out, fs.fill, pad)
         _pfmt_intmin(out, ip, 0, s)
     end
 end
@@ -153,16 +160,20 @@ function _pfmt_i(out::IO, fs::FormatSpec, x::Integer, op::Op) where {Op}
     end
 
     # printing
-    wid = fs.width
-    if wid <= xlen
+    pad = fs.width - xlen
+    if pad <= 0
         _pfmt_int(out, sch, ip, 0, ax, op)
     elseif fs.zpad
-        _pfmt_int(out, sch, ip, wid-xlen, ax, op)
+        _pfmt_int(out, sch, ip, pad, ax, op)
     elseif fs.align == '<'
         _pfmt_int(out, sch, ip, 0, ax, op)
-        _repprint(out, fs.fill, wid-xlen)
+        _repprint(out, fs.fill, pad)
+    elseif fs.align == '^'
+        _repprint(out, fs.fill, pad>>1)
+        _pfmt_int(out, sch, ip, 0, ax, op)
+        _repprint(out, fs.fill, (pad+1)>>1)
     else
-        _repprint(out, fs.fill, wid-xlen)
+        _repprint(out, fs.fill, pad)
         _pfmt_int(out, sch, ip, 0, ax, op)
     end
 end
@@ -205,20 +216,21 @@ function _pfmt_f(out::IO, fs::FormatSpec, x::AbstractFloat)
     sch != '\0' && (xlen += 1)
 
     # print
-    wid = fs.width
-    if wid <= xlen
+    pad = fs.width - xlen
+    if pad <= 0
         _pfmt_float(out, sch, 0, intv, decv, fs.prec)
     elseif fs.zpad
-        _pfmt_float(out, sch, wid-xlen, intv, decv, fs.prec)
+        _pfmt_float(out, sch, pad, intv, decv, fs.prec)
+    elseif fs.align == '<'
+        _pfmt_float(out, sch, 0, intv, decv, fs.prec)
+        _repprint(out, fs.fill, pad)
+    elseif fs.align == '^'
+        _repprint(out, fs.fill, pad>>1)
+        _pfmt_float(out, sch, 0, intv, decv, fs.prec)
+        _repprint(out, fs.fill, (pad+1)>>1)
     else
-        a = fs.align
-        if a == '<'
-            _pfmt_float(out, sch, 0, intv, decv, fs.prec)
-            _repprint(out, fs.fill, wid-xlen)
-        else
-            _repprint(out, fs.fill, wid-xlen)
-            _pfmt_float(out, sch, 0, intv, decv, fs.prec)
-        end
+        _repprint(out, fs.fill, pad)
+        _pfmt_float(out, sch, 0, intv, decv, fs.prec)
     end
 end
 
@@ -252,14 +264,14 @@ function _pfmt_e(out::IO, fs::FormatSpec, x::AbstractFloat)
     else
         rax = round(ax; sigdigits = fs.prec + 1)
         e = floor(Integer, log10(rax))  # exponent
-        u = rax * exp10(-e)  # significand
+        u = round(rax * exp10(-e); sigdigits = fs.prec + 1)  # significand
         i = 0
         v10 = 1
         while isinf(u)
             i += 1
             i > 18 && (u = 0.0; e = 0; break)
             v10 *= 10
-            u = v10 * rax * exp(-e - i)
+            u = round(v10 * rax * exp10(-e - i); sigdigits = fs.prec + 1)
         end
     end
 
@@ -270,20 +282,21 @@ function _pfmt_e(out::IO, fs::FormatSpec, x::AbstractFloat)
 
     # print
     ec = isuppercase(fs.typ) ? 'E' : 'e'
-    wid = fs.width
-    if wid <= xlen
+    pad = fs.width - xlen
+    if pad <= 0
         _pfmt_floate(out, sch, 0, u, fs.prec, e, ec)
     elseif fs.zpad
-        _pfmt_floate(out, sch, wid-xlen, u, fs.prec, e, ec)
+        _pfmt_floate(out, sch, pad, u, fs.prec, e, ec)
+    elseif fs.align == '<'
+        _pfmt_floate(out, sch, 0, u, fs.prec, e, ec)
+        _repprint(out, fs.fill, pad)
+    elseif fs.align == '^'
+        _repprint(out, fs.fill, pad>>1)
+        _pfmt_floate(out, sch, 0, u, fs.prec, e, ec)
+        _repprint(out, fs.fill, (pad+1)>>1)
     else
-        a = fs.align
-        if a == '<'
-            _pfmt_floate(out, sch, 0, u, fs.prec, e, ec)
-            _repprint(out, fs.fill, wid-xlen)
-        else
-            _repprint(out, fs.fill, wid-xlen)
-            _pfmt_floate(out, sch, 0, u, fs.prec, e, ec)
-        end
+        _repprint(out, fs.fill, pad)
+        _pfmt_floate(out, sch, 0, u, fs.prec, e, ec)
     end
 end
 
@@ -305,4 +318,3 @@ function _pfmt_specialf(out::IO, fs::FormatSpec, x::AbstractFloat)
         _pfmt_s(out, fs, "NaN")
     end
 end
-
