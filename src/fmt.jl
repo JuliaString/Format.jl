@@ -141,7 +141,7 @@ end
 function _optional_commas(x::Real, s::AbstractString, fspec::FormatSpec)
     prevwidth = length(s)
     dpos = findfirst( isequal('.'), s)
-    s = addcommas(s, prevwidth, dpos === nothing ? prevwidth : dpos - 1)
+    s = addcommas(s, prevwidth, dpos === nothing ? prevwidth : dpos - 1, fspec.sep)
 
     # check for excess width from commas
     w = length(s)

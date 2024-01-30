@@ -43,7 +43,7 @@ end
 # commas are added to only the numerator
 addcommasrat(s) = addcommas(s, length(s), findfirst( isequal('/'), s )-1)
 
-function checkcommas(s)
+function checkcommas(s, sep)
     len = length(s)
     for i in len:-1:1
         isdigit( s[i] ) && return addcommas(s, len, i)
@@ -51,7 +51,7 @@ function checkcommas(s)
     s
 end
 
-function addcommas(s::T, len, lst) where {T<:AbstractString}
+function addcommas(s::T, len, lst, sep=',') where {T<:AbstractString}
     lst < 4 && return s
     beg = 1
     while beg < len
@@ -69,12 +69,12 @@ function addcommas(s::T, len, lst) where {T<:AbstractString}
     pos = beg - 1
     for i = beg:lst-3
         sv[pos += 1] = s[i]
-        (cnt -= 1) == 0 && (cnt = 3; sv[pos += 1] = ',')
+        (cnt -= 1) == 0 && (cnt = 3; sv[pos += 1] = sep)
     end
     for i = lst-2:len; sv[i+commas] = s[i]; end
     T(sv)
 end
-addcommas(s) = (l = length(s); addcommas(s, l, l))
+addcommas(s, sep=',') = (l = length(s); addcommas(s, l, l, sep))
 
 function generate_format_string(;
                                 width::Int=-1,

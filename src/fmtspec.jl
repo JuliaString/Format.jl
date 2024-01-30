@@ -2,7 +2,7 @@
 
 # formatting specification language
 #
-#  spec  ::= [[fill]align][sign][#][0][width][,][.prec][type]
+#  spec  ::= [[fill]align][sign][#][0][width][,_][.prec][type]
 #  fill  ::= <any character>
 #  align ::= '<' | '^' | '>'
 #  sign  ::= '+' | '-' | ' '
@@ -37,6 +37,7 @@ struct FormatSpec
     ipre::Bool   # whether to prefix 0b, 0o, or 0x
     zpad::Bool   # whether to do zero-padding
     tsep::Bool   # whether to use thousand-separator
+    sep::Char
 
     function FormatSpec(typ::AbstractChar;
                         fill::AbstractChar=' ',
@@ -46,12 +47,21 @@ struct FormatSpec
                         prec::Int=-1,
                         ipre::Bool=false,
                         zpad::Bool=false,
-                        tsep::Bool=false)
+                        tsep=nothing)
 
         align == '\0' && (align = (typ in _numtypchars) ? '>' : '<')
         cls = _tycls(lowercase(typ))
         cls == 'f' && prec < 0 && (prec = 6)
-        new(cls, Char(typ), Char(fill), Char(align), Char(sign), width, prec, ipre, zpad, tsep)
+        if tsep === true
+            sep = ','
+        elseif tsep <: AbstractChar
+            sep = Char(sep)
+            tsep = true
+        else
+            tsep = false
+        end
+        new(cls, Char(typ), Char(fill), Char(align), Char(sign), width, prec, ipre, zpad,
+            tsep, sep)
     end
 
     # copy constructor with overrides
@@ -63,8 +73,20 @@ struct FormatSpec
                         prec::Int=spec.prec,
                         ipre::Bool=spec.ipre,
                         zpad::Bool=spec.zpad,
-                        tsep::Bool=spec.tsep)
-        new(spec.cls, spec.typ, Char(fill), Char(align), Char(sign), width, prec, ipre, zpad, tsep)
+                        tsep=nothing)
+        if tsep == nothing
+            tsep = spec.tsep
+            sep = spec.sep
+        elseif tsep == true
+            sep = ','
+        elseif tsep <: AbstractChar
+            sep = Char(sep)
+            tsep = true
+        else
+            tsep = false
+        end
+        new(spec.cls, spec.typ, Char(fill), Char(align), Char(sign), width, prec, ipre, zpad,
+            tsep, sep)
     end
 end
 
@@ -79,12 +101,12 @@ function show(io::IO, fs::FormatSpec)
     println(io, "  prec  = $(fs.prec)")
     println(io, "  ipre  = $(fs.ipre)")
     println(io, "  zpad  = $(fs.zpad)")
-    println(io, "  tsep  = $(fs.tsep)")
+    fs.tsep && println(io, "  tsep   = $(fs.sep)")
 end
 
 ## parse FormatSpec from a string
 
-const _spec_regex = r"^(.?[<^>])?([ +-])?(#)?(\d+)?(,)?(.\d+)?([bcdeEfFgGnosxX])?$"
+const _spec_regex = r"^(.?[<^>])?([ +-])?(#)?(\d+)?([,_])?(.\d+)?([bcdeEfFgGnosxX])?$"
 
 function FormatSpec(s::AbstractString)
     # default spec
@@ -96,6 +118,7 @@ function FormatSpec(s::AbstractString)
     _ipre = false
     _zpad = false
     _tsep = false
+    
     _typ = 's'
 
     if !isempty(s)
@@ -130,8 +153,8 @@ function FormatSpec(s::AbstractString)
             end
         end
 
-        # a5: [,]
-        a5 == nothing || (_tsep = true)
+        # a5: [,_]
+        a5 == nothing || (_tsep = Char(a5))
 
         # a6 [.prec]
         a6 == nothing || (_prec = parse(Int, a6[2:end]))
