@@ -264,14 +264,14 @@ function _pfmt_e(out::IO, fs::FormatSpec, x::AbstractFloat)
     else
         rax = round(ax; sigdigits = fs.prec + 1)
         e = floor(Integer, log10(rax))  # exponent
-        u = rax * exp10(-e)  # significand
+        u = round(rax * exp10(-e); sigdigits = fs.prec + 1)  # significand
         i = 0
         v10 = 1
         while isinf(u)
             i += 1
             i > 18 && (u = 0.0; e = 0; break)
             v10 *= 10
-            u = v10 * rax * exp10(-e - i)
+            u = round(v10 * rax * exp10(-e - i); sigdigits = fs.prec + 1)
         end
     end
 

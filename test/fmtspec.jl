@@ -150,7 +150,7 @@ end
     # Issue #110 (in Formatting.jl)
     f = FormatExpr("{:+d}")
     for T in (Int8, Int16, Int32, Int64, Int128)
-        @test format(f, typemin(T)) = string(typemin(T))
+        @test format(f, typemin(T)) == string(typemin(T))
     end
 end
 
@@ -257,6 +257,9 @@ end
     @test pyfmt("+11.3e", 1.0e-309) == "+1.000e-309"
     @test pyfmt("+11.3e", 1.0e-313) == "+1.000e-313"
 
+    # issue #108 (from Formatting.jl)
+    @test pyfmt(".1e", 0.0003) == "3.0e-04"
+    @test pyfmt(".1e", 0.0006) == "6.0e-04"
 end
 
 @testset "Format special floating point value" begin
@@ -279,6 +282,7 @@ end
     @test pyfmt("<5f", Inf) == "Inf  "
     @test pyfmt("^5f", Inf) == " Inf "
     @test pyfmt(">5f", Inf) == "  Inf"
+
     @test pyfmt("*<5f", Inf) == "Inf**"
     @test pyfmt("⋆<5f", Inf) == "Inf⋆⋆"
     @test pyfmt("*^5f", Inf) == "*Inf*"
