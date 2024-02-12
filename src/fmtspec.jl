@@ -54,10 +54,11 @@ struct FormatSpec
         cls == 'f' && prec < 0 && (prec = 6)
         if tsep === true
             sep = ','
-        elseif tsep <: AbstractChar
-            sep = Char(sep)
+        elseif tsep isa AbstractChar
+            sep = Char(tsep)
             tsep = true
         else
+            sep = '\0'
             tsep = false
         end
         new(cls, Char(typ), Char(fill), Char(align), Char(sign), width, prec, ipre, zpad,
@@ -74,15 +75,16 @@ struct FormatSpec
                         ipre::Bool=spec.ipre,
                         zpad::Bool=spec.zpad,
                         tsep=nothing)
-        if tsep == nothing
+        if tsep === nothing
             tsep = spec.tsep
             sep = spec.sep
-        elseif tsep == true
+        elseif tsep === true
             sep = ','
-        elseif tsep <: AbstractChar
-            sep = Char(sep)
+        elseif tsep isa AbstractChar
+            sep = Char(tsep)
             tsep = true
         else
+            sep = '\0'
             tsep = false
         end
         new(spec.cls, spec.typ, Char(fill), Char(align), Char(sign), width, prec, ipre, zpad,
@@ -91,17 +93,17 @@ struct FormatSpec
 end
 
 function show(io::IO, fs::FormatSpec)
-    println(io, "$(typeof(fs))")
-    println(io, "  cls   = $(fs.cls)")
-    println(io, "  typ   = $(fs.typ)")
-    println(io, "  fill  = $(fs.fill)")
-    println(io, "  align = $(fs.align)")
-    println(io, "  sign  = $(fs.sign)")
-    println(io, "  width = $(fs.width)")
-    println(io, "  prec  = $(fs.prec)")
-    println(io, "  ipre  = $(fs.ipre)")
-    println(io, "  zpad  = $(fs.zpad)")
-    fs.tsep && println(io, "  tsep   = $(fs.sep)")
+    println(io, typeof(fs))
+    println(io, "  cls   = ", fs.cls)
+    println(io, "  typ   = ", fs.typ)
+    println(io, "  fill  = ", fs.fill)
+    println(io, "  align = ", fs.align)
+    println(io, "  sign  = ", fs.sign)
+    println(io, "  width = ", fs.width)
+    println(io, "  prec  = ", fs.prec)
+    println(io, "  ipre  = ", fs.ipre)
+    println(io, "  zpad  = ", fs.zpad)
+    println(io, "  tsep  = ", fs.tsep ? repr(fs.sep) : "false")
 end
 
 ## parse FormatSpec from a string
@@ -154,7 +156,7 @@ function FormatSpec(s::AbstractString)
         end
 
         # a5: [,_]
-        a5 == nothing || (_tsep = Char(a5))
+        a5 == nothing || (_tsep = a5[1])
 
         # a6 [.prec]
         a6 == nothing || (_prec = parse(Int, a6[2:end]))
@@ -177,11 +179,11 @@ end # function FormatSpec
 
 ## formatted printing using a format spec
 
-mutable struct _Dec end
-mutable struct _Oct end
-mutable struct _Hex end
-mutable struct _HEX end
-mutable struct _Bin end
+struct _Dec end
+struct _Oct end
+struct _Hex end
+struct _HEX end
+struct _Bin end
 
 _srepr(x) = repr(x)
 _srepr(x::AbstractString) = x

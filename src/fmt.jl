@@ -141,17 +141,10 @@ end
 function _optional_commas(x::Real, s::AbstractString, fspec::FormatSpec)
     prevwidth = length(s)
     dpos = findfirst( isequal('.'), s)
-    s = addcommas(s, prevwidth, dpos === nothing ? prevwidth : dpos - 1, fspec.sep)
-
+    ns = addcommas(s, prevwidth, dpos === nothing ? prevwidth : dpos - 1, fspec.sep)
     # check for excess width from commas
     w = length(s)
-    if fspec.width > 0 && w > fspec.width && w > prevwidth
-        # we may have made the string too wide with those commas... gotta fix it
-        # left or right alignment ('<' is left)
-        # TODO: handle center alignment
-        s = fspec.align == '<' ? rpad(strip(s), fspec.width) : lpad(strip(s), fspec.width)
-    end
-    s
+    (fspec.width > 0 && w > fspec.width && w > prevwidth) ? s : ns
 end
 _optional_commas(x, s::AbstractString, fspec::FormatSpec) = s
 
@@ -198,10 +191,7 @@ function fmt end
 function fmt(x; kwargs...)
     fspec = fmt_default(x)
     isempty(kwargs) || (fspec = FormatSpec(fspec; kwargs...))
-    s = pyfmt(fspec, x)
-    # TODO: allow other thousands separators besides comma
-    # add the commas now... I was confused as to when this is done currently
-    fspec.tsep ? _optional_commas(x, s, fspec) : s
+    pyfmt(fspec, x)
 end
 
 # some helper method calls, which just convert to kwargs

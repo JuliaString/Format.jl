@@ -10,9 +10,9 @@ function _get_formatter(fmt)
     _formatters[fmt] = FmtSpec(fmt)
 end
 
-_cfmt_comma(fspec::FmtSpec, x) = addcommasreal(_cfmt(fspec, x))
-_cfmt_comma(fspec::FmtSpec{FmtStr}, x::Rational) =  addcommasrat(_cfmt(fspec, x))
-_cfmt_comma(fspec::FmtSpec{<:FmtInts}, x) = checkcommas(_cfmt(fspec, x))
+_cfmt_comma(fspec::FmtSpec, x) = addcommasreal(_cfmt(fspec, x), Char(fspec.tsep))
+_cfmt_comma(fspec::FmtSpec{FmtStr}, x::Rational) =  addcommasrat(_cfmt(fspec, x), Char(fspec.tsep))
+_cfmt_comma(fspec::FmtSpec{<:FmtInts}, x) = checkcommas(_cfmt(fspec, x), Char(fspec.tsep))
 
 function _cfmt(fspec::FmtSpec, x)
     sv = Base.StringVector(23) # Trust that lower level code will expand if necessary
@@ -29,29 +29,29 @@ function generate_formatter(fmt::ASCIIStr)
     fspec.tsep == 0 ? x -> _cfmt(fspec, x) : x -> _cfmt_comma(fspec, x)
 end
 
-function addcommasreal(s)
+function addcommasreal(s, sep)
     len = length(s)
     dpos = findfirst( isequal('.'), s )
-    dpos !== nothing && return addcommas(s, len, dpos-1)
+    dpos !== nothing && return addcommas(s, len, dpos-1, sep)
     # find the rightmost digit
     for i in len:-1:1
-        isdigit( s[i] ) && return addcommas(s, len, i)
+        isdigit( s[i] ) && return addcommas(s, len, i, sep)
     end
     s
 end
 
 # commas are added to only the numerator
-addcommasrat(s) = addcommas(s, length(s), findfirst( isequal('/'), s )-1)
+addcommasrat(s, sep) = addcommas(s, length(s), findfirst( isequal('/'), s )-1, sep)
 
 function checkcommas(s, sep)
     len = length(s)
     for i in len:-1:1
-        isdigit( s[i] ) && return addcommas(s, len, i)
+        isdigit( s[i] ) && return addcommas(s, len, i, sep)
     end
     s
 end
 
-function addcommas(s::T, len, lst, sep=',') where {T<:AbstractString}
+function addcommas(s::T, len, lst, sep) where {T<:AbstractString}
     lst < 4 && return s
     beg = 1
     while beg < len
@@ -74,7 +74,7 @@ function addcommas(s::T, len, lst, sep=',') where {T<:AbstractString}
     for i = lst-2:len; sv[i+commas] = s[i]; end
     T(sv)
 end
-addcommas(s, sep=',') = (l = length(s); addcommas(s, l, l, sep))
+addcommas(s, sep) = (l = length(s); addcommas(s, l, l, sep))
 
 function generate_format_string(;
                                 width::Int=-1,
@@ -108,6 +108,37 @@ function generate_format_string(;
     String(append!(s, _codeunits(conversion)))
 end
 
+"""
+Format a value, using the following keyword arguments to control formatting
+(Bold keywords are not printf standard):
+
+* width. Integer. Try to fit the output into this many characters. May not be successful.
+   Sacrifice space first, then commas.
+* precision. Integer. How many decimal places.
+* leftjustified. Boolean
+* zeropadding. Boolean
+* commas. Boolean. Thousands-group separator.
+* signed. Boolean. Always show +/- sign?
+* positivespace. Boolean. Prepend an extra space for positive numbers? (so they align nicely with negative numbers)
+* **parens**. Boolean. Use parenthesis instead of "-". e.g. `(1.01)` instead of `-1.01`. Useful in finance. Note that
+  you cannot use `signed` and `parens` option at the same time.
+* **stripzeros**. Boolean. Strip trailing '0' to the right of the decimal (and to the left of 'e', if any ).
+   * It may strip the decimal point itself if all trailing places are zeros.
+   * This is true by default if precision is not given, and vice versa.
+* alternative. Boolean. See `#` alternative form explanation in standard printf documentation
+* conversion. length=1 string. Default is type dependent. It can be one of `aAeEfFoxX`. See standard
+  printf documentation.
+* **mixedfraction**. Boolean. If the number is rational, format it in mixed fraction e.g. `1_1/2` instead of `3/2`
+* **mixedfractionsep**. Default `_`
+* **fractionsep**. Default `/`
+* **fractionwidth**. Integer. Try to pad zeros to the numerator until the fractional part has this width
+* **tryden**. Integer. Try to use this denominator instead of a smaller one. No-op if it'd lose precision.
+* **suffix**. String. This strings will be appended to the output. Useful for units/%
+* **autoscale**. Symbol, default `:none`. It could be `:metric`, `:binary`, or `:finance`.
+    * `:metric` implements common SI symbols for large and small numbers e.g. `M`, `k`, `μ`, `n`
+    * `:binary` implements common ISQ symbols for large numbers e.g. `Ti`, `Gi`, `Mi`, `Ki`
+    * `:finance` implements common finance/news symbols for large numbers e.g. `b` (billion), `m` (millions)
+"""
 function format( x::T;
                  width::Int=-1,
                  precision::Int= -1,
