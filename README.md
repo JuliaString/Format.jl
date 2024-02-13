@@ -34,7 +34,16 @@ This package offers Python-style general formatting and c-style numerical format
 
 ## Getting Started
 
-This package is pure Julia.  It is now registered, so it can be added simply with `Pkg.add("Format")`.
+This package is pure Julia. Setting up this package is like setting up other Julia packages:
+
+```julia
+Pkg.add("Format")
+```
+or
+```julia
+]add Format
+```
+
 It is forked off of [Formatting.jl](https://github.com/JuliaIO/Formatting.jl), and I try to keep the oldmaster branch up to date with the master branch of that, and cherry pick or port all necessary changes to `Format`).
 
 To start using the package, you can simply write
@@ -43,7 +52,7 @@ To start using the package, you can simply write
 using Format
 ```
 
-This package depends on Julia of version 0.6 or above, and. The package is MIT-licensed.
+This package depends on Julia of version 1.4 or above, and. The package is MIT-licensed.
 
 
 ## Python-style Types and Functions
@@ -133,10 +142,6 @@ One can use ``pyfmt`` to format a single value into a string, or ``format`` to f
 
 At this point, this package implements a subset of Python's formatting language (with slight modification). Here is a summary of the differences:
 
-- ``g`` and ``G`` for floating point formatting have not been supported yet. Please use ``f``, ``e``, or ``E`` instead.
-
-- The package currently provides default alignment, left alignment ``<`` and right alignment ``>``. Other form of alignment such as centered alignment ``^`` has not been supported yet.
-
 - In terms of argument specification, it supports natural ordering (e.g. ``{} + {}``), explicit position (e.g. ``{1} + {2}``). It hasn't supported named arguments or fields extraction yet. Note that mixing these two modes is not allowed (e.g. ``{1} + {}``).
 
 - The package provides support for filtering (for explicitly positioned arguments), such as ``{1|>lowercase}`` by allowing one to embed the ``|>`` operator, which the Python counter part does not support.
@@ -171,19 +176,12 @@ fmtrfunc = generate_formatter( fmt ) # usage 2. This bypass repeated lookup of c
 s = fmtrfunc( 3.14159 )
 
 s = format( 3.14159, precision=3 ) # usage 3. Most flexible, with some non-printf options. Least performant.
-```
-### Speed
-
-`cfmt`: Speed penalty is about 20% for floating point and 30% for integers.
-
-If the formatter is stored and used instead (see the example using `generate_formatter` above),
-the speed penalty reduces to 10% for floating point and 15% for integers.
 
 ### Commas
 
-This package also supplements the lack of thousand separator e.g. `"%'d"`, `"%'f"`, `"%'s"`.
+This package also supplements the lack of thousand separator e.g. `"%'d"`, `"%'f"`, `"%'g"`.
 
-Note: `"%'s"` behavior is that for small enough floating point (but not too small),
+Note: `"%'g"` behavior is that for small enough floating point (but not too small),
 thousand separator would be used. If the number needs to be represented by `"%e"`, no
 separator is used.
 
@@ -198,7 +196,7 @@ s = format( 1234, commas=true ) # 1,234
 s = format( -1234, commas=true, parens=true ) # (1,234)
 ```
 
-The keyword arguments are (Bold keywards are not printf standard)
+The keyword arguments are (Bold keywords are not printf standard)
 
 * width. Integer. Try to fit the output into this many characters. May not be successful.
    Sacrifice space first, then commas.

@@ -121,23 +121,16 @@ using Format
 fmt = "%10.3f"
 s = cfmt( fmt, 3.14159 ) # usage 1. Quite performant. Easiest to switch to.
 
-fmtrfunc = generate_formatter( fmt ) # usage 2. This bypass repeated lookup of cached function. Most performant.
+fmtrfunc = generate_formatter( fmt ) # usage 2. This bypasses repeated lookup of cached function. Most performant.
 s = fmtrfunc( 3.14159 )
 
 s = format( 3.14159, precision=3 ) # usage 3. Most flexible, with some non-printf options. Least performant.
 ```
-### Speed
-
-`cfmt`: Speed penalty is about 20% for floating point and 30% for integers.
-
-If the formatter is stored and used instead (see the example using `generate_formatter` above),
-the speed penalty reduces to 10% for floating point and 15% for integers.
-
 ### Commas
 
-This package also supplements the lack of thousand separator e.g. `"%'d"`, `"%'f"`, `"%'s"`.
+This package also supplements the lack of thousand separator e.g. `"%'d"`, `"%'f"`, `"%'g"`.
 
-Note: `"%'s"` behavior is that for small enough floating point (but not too small),
+Note: `"%'g"` behavior is that for small enough floating point (but not too small),
 thousand separator would be used. If the number needs to be represented by `"%e"`, no
 separator is used.
 
