@@ -154,6 +154,75 @@ end
     end
 end
 
+@testset "Python separators (, and _)" begin
+
+    # May need to change so that 'd' is a default, if none specified for integer value
+    @test pyfmt(",d", 1) == "1"
+    @test pyfmt(",d", 12) == "12"
+    @test pyfmt(",d", 123) == "123"
+    @test pyfmt(",d", 1234) == "1,234"
+    @test pyfmt(",d", 12345) == "12,345"
+    @test pyfmt(",d", 123456) == "123,456"
+    @test pyfmt(",d", 1234567) == "1,234,567"
+    @test pyfmt(",d", 12345678) == "12,345,678"
+    @test pyfmt(",d", 123456789) == "123,456,789"
+    @test pyfmt(",d", 1234567890) == "1,234,567,890"
+
+    @test pyfmt("_d", 1) == "1"
+    @test pyfmt("_d", 12) == "12"
+    @test pyfmt("_d", 123) == "123"
+    @test pyfmt("_d", 1234) == "1_234"
+    @test pyfmt("_d", 12345) == "12_345"
+    @test pyfmt("_d", 123456) == "123_456"
+    @test pyfmt("_d", 1234567) == "1_234_567"
+    @test pyfmt("_d", 12345678) == "12_345_678"
+    @test pyfmt("_d", 123456789) == "123_456_789"
+    @test pyfmt("_d", 1234567890) == "1_234_567_890"
+
+    @test pyfmt("_x", 0x1) == "1"
+    @test pyfmt("_x", 0x12) == "12"
+    @test pyfmt("_x", 0x123) == "123"
+    @test pyfmt("_x", 0x1234) == "1234"
+    @test pyfmt("_x", 0x12345) == "1_2345"
+    @test pyfmt("_x", 0x123456) == "12_3456"
+    @test pyfmt("_x", 0x1234567) == "123_4567"
+    @test pyfmt("_x", 0x12345678) == "1234_5678"
+    @test pyfmt("_x", 0x123456789) == "1_2345_6789"
+    @test pyfmt("_x", 0x123456789a) == "12_3456_789a"
+
+    @test pyfmt("_b", 0b1) == "1"
+    @test pyfmt("_b", 0b10) == "10"
+    @test pyfmt("_b", 0b101) == "101"
+    @test pyfmt("_b", 0b1010) == "1010"
+    @test pyfmt("_b", 0b10101) == "1_0101"
+    @test pyfmt("_b", 0b101010) == "10_1010"
+
+    @test pyfmt("_o", 0o1) == "1"
+    @test pyfmt("_o", 0o12) == "12"
+    @test pyfmt("_o", 0o123) == "123"
+    @test pyfmt("_o", 0o1234) == "1234"
+    @test pyfmt("_o", 0o12345) == "1_2345"
+    @test pyfmt("_o", 0o123456) == "12_3456"
+
+    @test pyfmt("15,d",  123456789) == "    123,456,789"
+    @test pyfmt("15,d", -123456789) == "   -123,456,789"
+
+    @test pyfmt("06,d",  1234) == "01,234"
+    @test pyfmt("07,d",  1234) == "001,234"
+
+    # May need to change how separators are handled with zero padding,
+    # to produce the same results as Python
+
+#    @test pyfmt("08,d",  1234) == "0,001,234"
+#    @test pyfmt("09,d",  1234) == "0,001,234"
+#    @test pyfmt("010,d", 1234) == "00,001,234"
+
+    @test pyfmt("+#012_b", 42) == "+0b0010_1010"
+#    @test pyfmt("+#013_b", 42) == "+0b0_0010_1010"
+#    @test pyfmt("+#014_b", 42) == "+0b0_0010_1010"
+
+end
+
 @testset "Format floating point (f)" begin
 
     @test pyfmt("", 0.125) == "0.125"
