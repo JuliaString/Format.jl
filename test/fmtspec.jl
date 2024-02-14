@@ -275,6 +275,9 @@ end
     # Floating point error can upset this one (i.e. 0.99500000 or 0.994999999)
     @test (pyfmt(".2f", 0.995) == "1.00" || pyfmt(".2f", 0.995) == "0.99")
     @test pyfmt(".2f", 0.994) == "0.99"
+
+    # issue #102 (from Formatting.jl)
+    @test pyfmt("15.6f", 1e20) == "100000000000000000000.000000"
 end
 
 @testset "Format floating point (e)" begin
