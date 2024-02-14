@@ -154,6 +154,19 @@ function _pfmt_i(out::IO, fs::FormatSpec, x::Integer, op::Op) where {Op}
     postpad == 0 || _repprint(out, fs.fill, postpad)
 end
 
+function _truncval(v)
+    try
+        return trunc(Integer, v)
+    catch e
+        e isa InexactError || rethrow(e)
+    end
+    try
+        return trunc(Int128, v)
+    catch e
+        e isa InexactError || rethrow(e)
+    end
+    trunc(BigInt, v)
+end
 
 ### print floating point numbers
 
@@ -162,7 +175,7 @@ function _pfmt_f(out::IO, fs::FormatSpec, x::AbstractFloat)
     prec = fs.prec
     rax = round(abs(x); digits = prec)
     sch = _signchar(x, fs.sign)
-    intv = trunc(Integer, rax)
+    intv = _truncval(rax)
     decv = rax - intv
 
     # calculate length
