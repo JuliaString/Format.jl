@@ -49,10 +49,16 @@ include("speedtest.jl")
     @test cfmt( "%'f", -Inf ) == "-Inf"
     @test cfmt( "%'s", 1000.0 ) == "1,000.0"
     @test cfmt( "%'s", 1234567.0 ) == "1.234567e6"
+    @test cfmt( "%'g", 1000.0 ) == "1,000"
 end
 
 @testset "Test bug introduced by stdlib/Printf rewrite" begin
     @test cfmt( "%4.2s", "a" ) == "   a"
+end
+
+@testset "Test precision with wide characters" begin
+    @test cfmt( "%10.9s", "\U1f355" ^ 6) == "  " * "\U1f355" ^ 4
+    @test cfmt( "%10.10s", "\U1f355" ^ 6) == "\U1f355" ^ 5
 end
 
 @testset "test format..." begin

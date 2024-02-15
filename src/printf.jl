@@ -234,21 +234,28 @@ end
 # strings
 function _fmt(buf, pos, spec::FmtSpec{FmtStr}, arg)
     altf, width, prec = spec.altf, spec.width, spec.prec
-    str = altf && (arg isa Symbol || arg isa AbstractString) ? repr(arg) : string(arg)
-    slen = length(str)
-    op = p = prec == -1 ? slen : min(slen, prec)
-    # Make sure there is enough room in buffer
-    nlen = max(width, p)
-    buflen = sizeof(buf) - pos
-    buflen < nlen && resize!(buf, nlen + pos)
-    !spec.leftalign && width > p && (pos = padn(buf, pos, width - p))
-    for c in str
-        p == 0 && break
-        pos = writechar(buf, pos, c)
-        p -= 1
+    s = altf && (arg isa Symbol || arg isa AbstractString) ? repr(arg) : string(arg)
+    slen = textwidth(s)
+    str, slen = 0 <= prec < slen ? _truncstr(s, slen, prec) : (s, slen)
+    prepad = postpad = 0
+    pad = width - slen
+    if pad > 0
+        if spec.leftalign
+            postpad = pad
+        else
+            prepad = pad
+        end
     end
-    spec.leftalign && width > op && return padn(buf, pos, width - op)
-    return pos
+
+    # Make sure there is enough room in buffer
+    nlen = pos + prepad + sizeof(str) + postpad
+    nlen > sizeof(buf) && resize!(buf, nlen)
+
+    prepad == 0 || (pos = padn(buf, pos, prepad))
+    for c in str
+        pos = writechar(buf, pos, c)
+    end
+    return postpad == 0 ? pos : padn(buf, pos, postpad)
 end
 
 const BaseInt = Union{Int8, Int16, Int32, Int64, Int128}
