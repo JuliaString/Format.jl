@@ -13,24 +13,43 @@ function _repprint(out::IO, c::AbstractChar, n::Int)
     end
 end
 
-
 ### print string or char
 
-function _pfmt_s(out::IO, fs::FormatSpec, s::Union{AbstractString,AbstractChar})
-    pad = fs.width - textwidth(s)
-    if pad <= 0
-        print(out, s)
-    elseif fs.align == '<'
-        print(out, s)
-        _repprint(out, fs.fill, pad)
-    elseif fs.align == '^'
-        _repprint(out, fs.fill, pad>>1)
-        print(out, s)
-        _repprint(out, fs.fill, (pad+1)>>1)
-    else
-        _repprint(out, fs.fill, pad)
-        print(out, s)
+function _truncstr(s::AbstractString, slen, prec)
+    prec == 0 && return ("", 0)
+    i, n = 0, 1
+    siz = ncodeunits(s)
+    while n <= siz
+	(prec -= textwidth(s[n])) < 0 && break
+	i = n
+        n = nextind(s, i)
     end
+    str = SubString(s, 1, i)
+    return (str, textwidth(str))
+end
+
+_truncstr(s::AbstractChar, slen, prec) = ("", 0)
+
+function _pfmt_s(out::IO, fs::FormatSpec, s::Union{AbstractString,AbstractChar})
+    slen = textwidth(s)
+    str, slen = 0 <= fs.prec < slen ? _truncstr(s, slen, fs.prec) : (s, slen)
+    prepad = postpad = 0
+    pad = fs.width - slen
+    if pad > 0
+        if fs.align == '<'
+            postpad = pad
+        elseif fs.align == '^'
+            prepad, postpad = pad>>1, (pad+1)>>1
+        else
+            prepad = pad
+        end
+    end
+    # left padding
+    prepad == 0 || _repprint(out, fs.fill, prepad)
+    # print string
+    print(out, str)
+    # right padding
+    postpad == 0 || _repprint(out, fs.fill, postpad)
 end
 
 _unsigned_abs(x::Signed) = unsigned(abs(x))

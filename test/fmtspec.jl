@@ -54,6 +54,7 @@ end
     @test pyfmt("#b", 6) == "0b110"
     @test pyfmt("#o", 6) == "0o6"
     @test pyfmt("#x", 6) == "0x6"
+    @test pyfmt("#X", 10) == "0XA"
 end
 
 @testset "Format string" begin
@@ -75,6 +76,15 @@ end
     @test pyfmt("⋆^5s", "αβγ") == "⋆αβγ⋆"
     @test pyfmt("*<5s", "abc") == "abc**"
     @test pyfmt("⋆<5s", "αβγ") == "αβγ⋆⋆"
+
+    # Issue #83 (in Formatting.jl)
+    @test pyfmt(".3s", "\U1f595\U1f596") == "🖕"
+    @test pyfmt(".4s", "\U1f595\U1f596") == "🖕🖖"
+    @test pyfmt(".5s", "\U1f595\U1f596") == "🖕🖖"
+
+    @test pyfmt("6.3s", "\U1f595\U1f596") == "🖕    "
+    @test pyfmt("6.4s", "\U1f595\U1f596") == "🖕🖖  "
+    @test pyfmt("6.5s", "\U1f595\U1f596") == "🖕🖖  "
 end
 
 @testset "Format Symbol" begin
