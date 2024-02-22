@@ -190,6 +190,9 @@ end
 ### print floating point numbers
 
 function _pfmt_f(out::IO, fs::FormatSpec, x::AbstractFloat)
+    # Handle %
+    percentflag = (fs.typ == '%')
+    percentflag && (x *= 100)
     # separate sign, integer, and decimal part
     prec = fs.prec
     rax = round(abs(x); digits = prec)
@@ -200,7 +203,7 @@ function _pfmt_f(out::IO, fs::FormatSpec, x::AbstractFloat)
     # calculate length
     xlen = ndigits(intv)
     numsep, numini = fs.tsep ? divrem(xlen - 1, 3) : (0, 0)
-    xlen += ifelse(prec > 0, prec + 1, 0) + (sch != '\0') + numsep
+    xlen += ifelse(prec > 0, prec + 1, 0) + (sch != '\0') + numsep + percentflag
 
     # calculate padding needed
     pad = fs.width - xlen
@@ -237,6 +240,10 @@ function _pfmt_f(out::IO, fs::FormatSpec, x::AbstractFloat)
         nd < prec && _repprint(out, '0', prec - nd)
         _outint(out, idecv)
     end
+
+    # print trailing percent sign
+    percentflag && print(out, '%')
+
     # right padding
     postpad == 0 || _repprint(out, fs.fill, postpad)
 end

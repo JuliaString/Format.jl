@@ -344,6 +344,13 @@ end
     @test pyfmt(".1e", 0.0006) == "6.0e-04"
 end
 
+@testset "Format percentage (%)" begin
+    @test pyfmt("8.2%", 0.123456)  == "  12.35%"
+    @test pyfmt("<8.2%", 0.123456) == "12.35%  "
+    @test pyfmt("^8.2%", 0.123456) == " 12.35% "
+    @test pyfmt(">8.2%", 0.123456) == "  12.35%"
+end
+
 @testset "Format special floating point value" begin
 
     @test pyfmt("f", NaN) == "NaN"
