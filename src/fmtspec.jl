@@ -9,7 +9,7 @@
 #  width ::= <integer>
 #  prec  ::= <integer>
 #  type  ::= 'b' | 'c' | 'd' | 'e' | 'E' | 'f' | 'F' | 'g' | 'G' |
-#            'n' | 'o' | 'x' | 'X' | 's'
+#            'n' | 'o' | 'x' | 'X' | 's' | '%'
 #
 # Please refer to http://docs.python.org/2/library/string.html#formatspec
 # for more details
@@ -17,11 +17,11 @@
 
 ## FormatSpec type
 
-const _numtypchars = Set(['b', 'd', 'e', 'E', 'f', 'F', 'g', 'G', 'n', 'o', 'x', 'X'])
+const _numtypchars = Set(['b', 'd', 'e', 'E', 'f', 'F', 'g', 'G', 'n', 'o', 'x', 'X', '%'])
 
 _tycls(c::AbstractChar) =
     (c == 'd' || c == 'n' || c == 'b' || c == 'o' || c == 'x') ? 'i' :
-    (c == 'e' || c == 'f' || c == 'g') ? 'f' :
+    (c == 'e' || c == 'f' || c == 'g' || c == '%') ? 'f' :
     (c == 'c') ? 'c' :
     (c == 's') ? 's' :
     error("Invalid type char $(c)")
@@ -108,7 +108,7 @@ end
 
 ## parse FormatSpec from a string
 
-const _spec_regex = r"^(.?[<^>])?([ +-])?(#)?(\d+)?([,_])?(.\d+)?([bcdeEfFgGnosxX])?$"
+const _spec_regex = r"^(.?[<^>])?([ +-])?(#)?(\d+)?([,_])?(.\d+)?([bcdeEfFgGnosxX%])?$"
 
 function FormatSpec(s::AbstractString)
     # default spec
@@ -204,7 +204,7 @@ function printfmt(io::IO, fs::FormatSpec, x)
     elseif cls == 'f'
         fx = float(x)
         if isfinite(fx)
-            ty == 'f' || ty == 'F' ? _pfmt_f(io, fs, fx) :
+            ty == 'f' || ty == 'F' || ty == '%' ? _pfmt_f(io, fs, fx) :
             ty == 'e' || ty == 'E' ? _pfmt_e(io, fs, fx) : _pfmt_g(io, fs, fx)
         else
             _pfmt_specialf(io, fs, fx)
