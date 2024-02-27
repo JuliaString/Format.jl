@@ -176,6 +176,7 @@ fmtrfunc = generate_formatter( fmt ) # usage 2. This bypass repeated lookup of c
 s = fmtrfunc( 3.14159 )
 
 s = format( 3.14159, precision=3 ) # usage 3. Most flexible, with some non-printf options. Least performant.
+```
 
 ### Commas
 
