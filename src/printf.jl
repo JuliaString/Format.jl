@@ -1,3 +1,5 @@
+# C-style formatting functions, originally based on Printf.jl
+
 using Base.Ryu
 
 abstract type FmtType end
@@ -117,7 +119,7 @@ function FmtSpec(f::AbstractString)
         end
     end
     # parse prec
-    prec = -1
+    prec = 0
     parsedprecdigits = false
     if b == UInt8('.')
         pos > len && throw(ArgumentError("incomplete format string: '$f'"))
@@ -141,6 +143,8 @@ function FmtSpec(f::AbstractString)
     # parse length modifier (ignored)
     if b == UInt8('h') || b == UInt8('l')
         prev = b
+        pos > len &&
+            throw(ArgumentError("format string - length modifier is missing type specifier: '$f'"))
         b = bytes[pos]
         pos += 1
         if b == prev
@@ -149,6 +153,8 @@ function FmtSpec(f::AbstractString)
             pos += 1
         end
     elseif b in b"Ljqtz"
+        pos > len &&
+            throw(ArgumentError("format string - length modifier is missing type specifier: '$f'"))
         b = bytes[pos]
         pos += 1
     end
@@ -206,7 +212,7 @@ end
 
 function _fmt(buf, pos, spec::FmtSpec{FmtChr}, arg)
     ch = arg isa String ? arg[1] : Char(arg)
-    width = spec.width - 1
+    width = spec.width - textwidth(ch)
     width <= 0 && return writechar(buf, pos, ch)
     if spec.leftalign
         padn(buf, writechar(buf, pos, ch), width)
@@ -277,21 +283,24 @@ _fmt(buf, pos, spec::FmtSpec{<:FmtInts}, arg::BaseUns) =
 _fmt(buf, pos, spec::FmtSpec{<:FmtInts}, arg::BaseInt) =
     _fmt(buf, pos, spec, arg < 0, unsigned(abs(arg)))
 
+hex_len(x) = x == 0 ? 1 : (sizeof(x)<<1) - (leading_zeros(x)>>2)
+oct_len(x) = x == 0 ? 1 : div((sizeof(x)<<3) - leading_zeros(x)+2, 3)
+
 function _fmt(buf, pos, spec::FmtSpec{F}, neg, x::T) where {F<:FmtInts,T<:Union{String,BaseUns}}
     n = T === String ? sizeof(x) :
-        F === FmtDec ? dec_len(x) :
-        F === FmtHex ? (sizeof(x)<<1) - (leading_zeros(x)>>2) :
-        div((sizeof(x)<<3) - leading_zeros(x)+2, 3)
+        F === FmtDec ? dec_len(x) : F === FmtHex ? hex_len(x) : oct_len(x)
     i = n
     arglen = n + (neg || (spec.plus | spec.space)) +
         ((spec.altf && (F !== FmtDec)) ? ifelse(F === FmtOct, 1, 2) : 0)
     width, prec = spec.width, spec.prec
-    arglen2 = arglen < width && prec > 0 ? arglen + min(max(0, prec - n), width - arglen) : arglen
+    precpad = max(0, prec - n)
+    # Calculate width including padding due to width or precision
+    arglen2 = arglen < width && prec > 0 ? arglen + min(precpad, width - arglen) : arglen
 
     # Make sure that remaining output buffer is large enough
     # This means that it isn't necessary to preallocate for cases that usually will never happen
-    buflen = sizeof(buf) - pos
-    buflen < arglen2 && resize!(buf, arglen2 + pos)
+    buflen = pos + max(width, arglen + precpad)
+    buflen > sizeof(buf) && resize!(buf, buflen)
 
     !spec.leftalign && !spec.zero && arglen2 < width &&
         (pos = padn(buf, pos, width - arglen2))
@@ -312,7 +321,7 @@ function _fmt(buf, pos, spec::FmtSpec{F}, neg, x::T) where {F<:FmtInts,T<:Union{
     if spec.zero && arglen2 < width
         pos = padzero(buf, pos, width - arglen2)
     elseif n < prec
-        pos = padzero(buf, pos, prec - n)
+        pos = padzero(buf, pos, precpad)
     elseif arglen < arglen2
         pos = padzero(buf, pos, arglen2 - arglen)
     end
@@ -380,7 +389,7 @@ function output_fmt_a(buf, pos, spec, neg, x)
     pos = outch(buf, pos, '0', upchar(spec, 'X'))
     if x == 0
         pos = outch(buf, pos, '0')
-        prec > 0 && (pos = padzero(buf, pos, prec))
+        prec > 0 && (pos = outch(buf, pos, '.'); pos = padzero(buf, pos, prec))
         return outch(buf, pos, upchar(spec, 'P'), '+', '0')
     end
     s, p = frexp(x)
@@ -471,26 +480,48 @@ end
 
 function _fmt(buf, pos, spec::FmtSpec{T}, arg) where {T <: FmtFlts}
     # Make sure there is enough room
-    width = spec.width
+    width, prec, plus, space, hash = spec.width, spec.prec, spec.plus, spec.space, spec.altf
     buflen = sizeof(buf) - pos
     needed = max(width, 309 + 17 + 5)
     buflen < needed && resize!(buf, pos + needed)
 
     x = tofloat(arg)
     if T === FmtFltE
-        newpos = Ryu.writeexp(buf, pos, x, spec.prec, spec.plus, spec.space,
-                              spec.altf, upchar(spec, 'E'), UInt8('.'))
+        newpos = Ryu.writeexp(buf, pos, x, prec, plus, space, hash, upchar(spec, 'E'), UInt8('.'))
     elseif T === FmtFltF
-        newpos = Ryu.writefixed(buf, pos, x, spec.prec, spec.plus, spec.space, spec.altf,
-                                UInt8('.'))
+        newpos = Ryu.writefixed(buf, pos, x, prec, plus, space, hash, UInt8('.'))
     elseif T === FmtFltG
-        prec = spec.prec
-        prec = prec == 0 ? 1 : prec
-        x = round(x, sigdigits=prec)
-        newpos = Ryu.writeshortest(buf, pos, x, spec.plus, spec.space, spec.altf, prec,
-                                   upchar(spec, 'E'), true, UInt8('.'))
+        if isinf(x) || isnan(x)
+            newpos = Ryu.writeshortest(buf, pos, x, plus, space)
+        else
+            # C11-compliant general format
+            prec = prec == 0 ? 1 : prec
+            # format the value in scientific notation and parse the exponent part
+            exp = let p = Ryu.writeexp(buf, pos, x, prec)
+                b1, b2, b3, b4 = buf[p-4], buf[p-3], buf[p-2], buf[p-1]
+                Z = UInt8('0')
+                if b1 == UInt8('e')
+                    # two-digit exponent
+                    sign = b2 == UInt8('+') ? 1 : -1
+                    exp = 10 * (b3 - Z) + (b4 - Z)
+                else
+                    # three-digit exponent
+                    sign = b1 == UInt8('+') ? 1 : -1
+                    exp = 100 * (b2 - Z) + 10 * (b3 - Z) + (b4 - Z)
+                end
+                flipsign(exp, sign)
+            end
+            if -4 ≤ exp < prec
+                newpos = Ryu.writefixed(buf, pos, x, prec - (exp + 1), plus, space, hash,
+                                        UInt8('.'), !hash)
+            else
+                newpos = Ryu.writeexp(buf, pos, x, prec - 1, plus, space, hash,
+                                      upchar(spec, 'E'), UInt8('.'), !hash)
+            end
+        end
     elseif T === FmtFltA
-        newpos = output_fmt_a(buf, pos, spec, x < 0, abs(x))
+        x, neg = x < 0 || x === -Base.zero(x) ? (-x, true) : (x, false)
+        newpos = output_fmt_a(buf, pos, spec, neg, x)
     end
     if newpos - pos < width
         # need to pad
@@ -500,8 +531,8 @@ function _fmt(buf, pos, spec::FmtSpec{T}, arg) where {T <: FmtFlts}
         else
             # right aligned
             n = width - (newpos - pos)
-            if spec.zero
-                ex = (arg < 0 || (spec.plus | spec.space)) + ifelse(T === FmtFltA, 2, 0)
+            if spec.zero && isfinite(x)
+                ex = (arg < 0 || (plus | space)) + ifelse(T === FmtFltA, 2, 0)
                 so = pos + ex
                 len = (newpos - pos) - ex
                 copyto!(buf, so + n, buf, so, len)
@@ -523,12 +554,14 @@ end
 
 # pointers
 _fmt(buf, pos, spec::FmtSpec{FmtPtr}, arg) =
-    _fmt(buf, pos, ptrfmt(spec, arg), UInt(arg))
+    _fmt(buf, pos, ptrfmt(spec, arg), UInt64(arg))
 
 @inline _dec_len1(v) = ifelse(v < 100, ifelse(v < 10, 1, 2), 3)
 @inline _dec_len2(v) = v < 1_000 ? _dec_len1(v) : ifelse(v < 10_000, 4, 5)
 @inline _dec_len4(v) = v < 100_000 ? _dec_len2(v) :
-    (v < 10_000_000 ? ifelse(v < 1_000_000, 6, 7) : ifelse(v < 100_000_000, 8, 9))
+    (v < 10_000_000
+     ? ifelse(v < 1_000_000, 6, 7)
+     : ifelse(v < 100_000_000, 8, ifelse(v < 1_000_000_000, 9, 10)))
 @inline function _dec_len8(v)
     if v < 1_000_000_000 # 1 - 9 digits
         _dec_len4(v)
