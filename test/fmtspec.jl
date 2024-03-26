@@ -223,13 +223,13 @@ end
     # May need to change how separators are handled with zero padding,
     # to produce the same results as Python
 
-#    @test pyfmt("08,d",  1234) == "0,001,234"
-#    @test pyfmt("09,d",  1234) == "0,001,234"
-#    @test pyfmt("010,d", 1234) == "00,001,234"
+    @test_broken pyfmt("08,d",  1234) == "0,001,234"
+    @test_broken pyfmt("09,d",  1234) == "0,001,234"
+    @test_broken pyfmt("010,d", 1234) == "00,001,234"
 
     @test pyfmt("+#012_b", 42) == "+0b0010_1010"
-#    @test pyfmt("+#013_b", 42) == "+0b0_0010_1010"
-#    @test pyfmt("+#014_b", 42) == "+0b0_0010_1010"
+    @test_broken pyfmt("+#013_b", 42) == "+0b0_0010_1010"
+    @test_broken pyfmt("+#014_b", 42) == "+0b0_0010_1010"
 
 end
 
