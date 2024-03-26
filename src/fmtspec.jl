@@ -214,6 +214,7 @@ function printfmt(io::IO, fs::FormatSpec, x)
     else # cls == 'c'
         _pfmt_s(io, fs, Char(x))
     end
+    nothing
 end
 
 printfmt(fs::FormatSpec, x) = printfmt(_stdout(), fs, x)

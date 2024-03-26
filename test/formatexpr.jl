@@ -34,13 +34,17 @@
     @test_throws(ErrorException, format("{1", 10) )
 
     f = FormatExpr("{1:s}")
-    printfmt(f,"")
-    printfmtln(f,"")
+    printfmt(f, "")
+    printfmtln(f, "")
     io = IOBuffer()
-    printfmt(io,f,"foobar")
+    printfmt(io, f, "foobar")
     @test io.size == 6
-    printfmtln(io,f,"ugly")
+    printfmtln(io, f, "ugly")
     @test io.size == 11
+
+    # Issue #81
+    @test printfmt("{:d}", 1000) == nothing
+
 end
 
 @testset "format escape {{ and }}" begin

@@ -151,6 +151,7 @@ function printfmt(io::IO, fe::FormatExpr, args...)
         end
     end
     isempty(fe.suffix) || print(io, fe.suffix)
+    nothing
 end
 
 const StringOrFE = Union{AbstractString, FormatExpr}
