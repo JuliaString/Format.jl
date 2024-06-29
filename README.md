@@ -37,7 +37,7 @@ This package offers Python-style general formatting and c-style numerical format
 This package is pure Julia. Setting up this package is like setting up other Julia packages:
 
 ```julia
-Pkg.add("Format")
+import Pkg; Pkg.add("Format")
 ```
 or
 ```julia
