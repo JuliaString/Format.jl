@@ -19,7 +19,7 @@ instance as
 fspec = FormatSpec("d")
 fspec = FormatSpec("<8.4f")
 ```
-Please refer to [Python's format specification language](http://docs.python.org/2/library/string.html#formatspec) for details.
+Please refer to [Python's format specification language](http://docs.python.org/3/library/string.html#formatspec) for details.
 
 
 `FormatExpr` captures a formatting expression that may involve multiple items.

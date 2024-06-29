@@ -67,7 +67,7 @@ In particular, `FormatSpec` is used to capture the specification of a single ent
 fspec = FormatSpec("d")
 fspec = FormatSpec("<8.4f")
 ```
-Please refer to [Python's format specification language](http://docs.python.org/2/library/string.html#formatspec) for details.
+Please refer to [Python's format specification language](http://docs.python.org/3/library/string.html#formatspec) for details.
 
 
 `FormatExpr` captures a formatting expression that may involve multiple items. One can compile a formatting string into a `FormatExpr` instance as
@@ -76,7 +76,7 @@ Please refer to [Python's format specification language](http://docs.python.org/
 fe = FormatExpr("{1} + {2}")
 fe = FormatExpr("{1:d} + {2:08.4e} + {3|>abs2}")
 ```
-Please refer to [Python's format string syntax](http://docs.python.org/2/library/string.html#format-string-syntax) for details.
+Please refer to [Python's format string syntax](http://docs.python.org/3/library/string.html#format-string-syntax) for details.
 
 
 **Note:** If the same format is going to be applied for multiple times. It is more efficient to first compile it.
