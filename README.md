@@ -118,7 +118,6 @@ One can use `printfmt` and `printfmtln` for formatted printing:
   printfmt(FormatExpr("{1:d}", 10)) # OK
   ```
 
-
 - **printfmtln**(io, fe, args...)
 
 - **printfmtln**(fe, args...)
