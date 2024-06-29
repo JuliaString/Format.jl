@@ -1,5 +1,5 @@
 """
-Format.jl
+# Format.jl
 
 This package provides various functions to provide formatted output,
 either in a fashion similar to C printf or Python format strings.
