@@ -200,6 +200,10 @@ function format( x::T;
                 end
             elseif T <: AbstractFloat
                 smallscales = [
+                    ( 1e-24, "y" ),
+                    ( 1e-21, "z" ),
+                    ( 1e-18, "a" ),
+                    ( 1e-15, "f" ),
                     ( 1e-12, "p" ),
                     ( 1e-9,  "n" ),
                     ( 1e-6,  "μ" ),
