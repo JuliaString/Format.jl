@@ -332,12 +332,14 @@ function _pfmt_e(out::IO, fs::FormatSpec, x::AbstractFloat)
 end
 
 function _pfmt_g(out::IO, fs::FormatSpec, x::AbstractFloat)
-    # number decomposition
-    ax = abs(x)
-    if 1.0e-4 <= ax < 1.0e6
-        _pfmt_f(out, fs, x)
+    # Branch according to the exponent
+    expnt = floor(Int, log10(abs(x)) )
+    if -4 <= expnt < fs.prec
+        newprec = fs.prec - expnt - 1
+        _pfmt_f(out, FormatSpec(fs ;prec=newprec), x)
     else
-        _pfmt_e(out, fs, x)
+        newprec = fs.prec - 1
+        _pfmt_e(out, FormatSpec(fs ;prec=newprec), x)
     end
 end
 
