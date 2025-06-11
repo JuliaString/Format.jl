@@ -130,6 +130,8 @@ end
     @test format( 1.2e6, autoscale = :metric ) == "1.2M"
     @test format( 1.2e3, autoscale = :metric ) == "1.2k"
     @test format( 1.2e-6, autoscale = :metric ) == "1.2μ"
+    @test format( 1.2e-7, autoscale = :metric ) == "120n"
+    @test format( 1.2e-8, autoscale = :metric ) == "12n"
     @test format( 1.2e-9, autoscale = :metric ) == "1.2n"
     @test format( 1.2e-12, autoscale = :metric ) == "1.2p"
 

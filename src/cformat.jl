@@ -209,7 +209,7 @@ function format( x::T;
                     ( 1e-6,  "μ" ),
                     ( 1e-3,  "m" ) ]
                 for (mag,sym) in smallscales
-                    if abs(x) < mag*10
+                    if abs(x) < mag*1000
                         x /= mag
                         suffix = string(sym, suffix)
                         break
