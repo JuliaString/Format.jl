@@ -344,6 +344,58 @@ end
     @test pyfmt(".1e", 0.0006) == "6.0e-04"
 end
 
+# This testset is currently non-compliant to Python's format_spec
+# Trailing insignificant zeros should be removed, however it is not done in
+# the current implementation.
+# FIXME: Make g/G compliant with Python's behavior
+@testset "Format general (g/G)" begin
+    # Default precision (6 significant digits)
+    @test pyfmt("g", 123.456789)  == "123.457"
+    @test pyfmt("g", 1.234567e-5) == "1.23457e-05"
+
+    # Switch between fixed and scientific depending on precision
+    # and exponent -> Issue #91 (Format.jl)
+    @test pyfmt(".3g", 0.0012345)    == "0.00123"
+    @test pyfmt(".3g", 1234567.0)    == "1.23e+06"
+    @test pyfmt(".2g", 0.000012345)  == "1.2e-05" 
+    @test pyfmt(".2g", 1e-4)         == "0.00010"
+    @test pyfmt("g", 1e5)            == "100000"
+    @test pyfmt("g", 1e6)            == "1.00000e+06"
+
+    # Trailing zero and decimal point trimming
+    @test pyfmt(".6g", 1200.0) == "1200.00"
+    @test pyfmt(".4g", 12.0)   == "12.00"
+
+    # Alternate form '#' keeps trailing zeros and decimal point
+    @test pyfmt("#.4g", 12.0)    == "12.00"
+    @test pyfmt("#.3g", 1.0e-5)  == "1.00e-05"
+
+    # Width, alignment, and zero-padding
+    @test pyfmt(">8.3g", 13.89)    == "    13.9"
+    @test pyfmt("⋆<8.3g", 13.89)   == "13.9⋆⋆⋆⋆"
+    @test pyfmt("⋆^8.3g", 13.89)   == "⋆⋆13.9⋆⋆"
+    @test pyfmt("010.3g", 13.89)   == "00000013.9"
+    @test pyfmt("010.3g", -13.89)  == "-0000013.9"
+    @test pyfmt("+010.3g", 13.89)  == "+0000013.9"
+
+    # Rounding across powers of ten
+    @test pyfmt(".3g", 9.999)      == "10.0"
+    @test pyfmt(".3g", 9.999e9)    == "1.00e+10"
+    @test pyfmt(".3g", -9.999e-5)  == "-0.000100"
+    @test pyfmt(".3g", -9.999e-6)  == "-1.00e-05"
+
+    # 'G' behaves like 'g' but uses 'E'
+    @test pyfmt(".3G", 1234567.0)   == "1.23E+06"
+    @test pyfmt(".3G", 0.000012345) == "1.23E-05"
+    @test pyfmt("G", 12.0)          == "12.0000"
+    @test pyfmt("#.4G", 12.0)       == "12.00"
+    @test pyfmt("G", 1e6)           == "1.00000E+06"
+
+    # Zeros, from regression of (04baaf3)
+    @test pyfmt("g",  0.0) == "0.00000"
+    @test pyfmt("g", -0.0) == "-0.00000"
+end
+
 @testset "Format percentage (%)" begin
     @test pyfmt("8.2%", 0.123456)  == "  12.35%"
     @test pyfmt("<8.2%", 0.123456) == "12.35%  "
@@ -355,18 +407,24 @@ end
 
     @test pyfmt("f", NaN) == "NaN"
     @test pyfmt("e", NaN) == "NaN"
+    @test pyfmt("g", NaN) == "NaN"
     @test pyfmt("f", NaN32) == "NaN"
     @test pyfmt("e", NaN32) == "NaN"
+    @test pyfmt("g", NaN32) == "NaN"
 
     @test pyfmt("f", Inf) == "Inf"
     @test pyfmt("e", Inf) == "Inf"
+    @test pyfmt("g", Inf) == "Inf"
     @test pyfmt("f", Inf32) == "Inf"
     @test pyfmt("e", Inf32) == "Inf"
+    @test pyfmt("g", Inf32) == "Inf"
 
     @test pyfmt("f", -Inf) == "-Inf"
     @test pyfmt("e", -Inf) == "-Inf"
+    @test pyfmt("g", -Inf) == "-Inf"
     @test pyfmt("f", -Inf32) == "-Inf"
     @test pyfmt("e", -Inf32) == "-Inf"
+    @test pyfmt("g", -Inf32) == "-Inf"
 
     @test pyfmt("<5f", Inf) == "Inf  "
     @test pyfmt("^5f", Inf) == " Inf "
