@@ -446,6 +446,9 @@ function _get_strspec(spec)
     _strspec[spec] = string(spec; modifier="R")
 end
 
+# `Base.MPFR.libmpfr` was added in Julia 1.9
+const libmpfr = isdefined(Base.MPFR, :libmpfr) ? Base.MPFR.libmpfr : :libmpfr
+
 @static if VERSION < v"1.5"
 _snprintf(ptr, siz, spec, arg) =
     ccall((:mpfr_snprintf,:libmpfr), Int32,
@@ -453,7 +456,7 @@ _snprintf(ptr, siz, spec, arg) =
           ptr, siz, spec, arg)
 else
 _snprintf(ptr, siz, spec, arg) =
-    @ccall "libmpfr".mpfr_snprintf(ptr::Ptr{UInt8}, siz::Csize_t, spec::Ptr{UInt8};
+    @ccall libmpfr.mpfr_snprintf(ptr::Ptr{UInt8}, siz::Csize_t, spec::Ptr{UInt8};
                                    arg::Ref{BigFloat})::Cint
 end
 
